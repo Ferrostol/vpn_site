@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Меню {{username}}</title>
+</head>
+<body>
+    <h2>Welcome, {{username}}!</h2>
+    <h3>Основные комманды</h3>
+    {% if error %}
+        <p style="color:red;">Не удалось удалить сессии</p>
+    {% endif %}
+    <form method="post" action="/user">
+        <input type="submit" name="delete_session" value="Удалить свои сессии">
+        <input type="submit" name="exit" value="Выход">
+    </form>
+</body>
+</html>
