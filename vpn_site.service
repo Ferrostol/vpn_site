@@ -1,0 +1,13 @@
+[Unit]
+Description=VPN site
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/root/vpn_site
+Environment="PATH=/root/vpn_site/venv/bin"
+ExecStart=/root/vpn_site/venv/bin/gunicorn -b 0.0.0.0:8000 app:app
+
+[Install]
+WantedBy=multi-user.target
