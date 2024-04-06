@@ -33,7 +33,7 @@ def user():
     match check_role(username, 'user'):
         case True:
             if request.method == 'POST':
-                match list(request.form)[0]:
+                match list(request.form)[-1]:
                     case 'delete_session':
                         return delete_my_session(username, 'user')
                     case 'exit':
@@ -54,7 +54,7 @@ def admin():
     match check_role(username, 'admin'):
         case True:
             if request.method == 'POST':
-                match list(request.form)[0]:
+                match list(request.form)[-1]:
                     case 'add_user':
                         add_new_user(request.form)
                         return redirect(url_for('admin'))
