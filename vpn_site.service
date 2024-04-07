@@ -7,7 +7,7 @@ User=root
 Group=root
 WorkingDirectory=/root/vpn_site/src
 Environment="PATH=/root/vpn_site/venv/bin"
-ExecStart=/root/vpn_site/venv/bin/gunicorn -b 0.0.0.0:8000 app:app
+ExecStart=/root/vpn_site/venv/bin/gunicorn app:app -c /root/vpn_site/gunicorn.conf.py
 
 [Install]
 WantedBy=multi-user.target
