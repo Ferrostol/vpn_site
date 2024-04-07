@@ -32,7 +32,7 @@ def get_ip_user(username):
 def get_processes(ip_address):
     try:
         # Выполнение команды ps с grep
-        result = subprocess.run(['ps', 'aux'], capture_output=True, text=True)
+        result = subprocess.run('/usr/bin/ps aux', shell=True, capture_output=True, text=True)
         # Поиск строк, содержащих xl2tpd и IP-адрес
         processes = [line for line in result.stdout.split('\n') if 'xl2tpd' in line and ip_address in line]
         return processes
@@ -45,7 +45,7 @@ def delete_session(username):
         processes = get_processes(ip_address)
         for proc in processes:
             pid = proc.split()[1]
-            subprocess.run(['kill', pid])
+            subprocess.run(f'/usr/bin/kill {pid}', shell=True, capture_output=True, text=True)
         return True
     except Exception:
         return False
@@ -60,7 +60,7 @@ def write_users_to_file(users):
                 file.write(f'"{username}" l2tpd "{password}" *\n')
         print("Данные успешно записаны в файл:", output_file)
         
-        subprocess.run(['systemctl', 'restart', 'xl2tpd.service'])
+        subprocess.run('systemctl restart xl2tpd.service', shell=True, capture_output=True, text=True)
         return None
     except Exception as e:
         return e
