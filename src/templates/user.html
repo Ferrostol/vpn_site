@@ -7,7 +7,11 @@
     <h2>Welcome, {{username}}!</h2>
     <h3>Основные комманды</h3>
     {% if error %}
-        <p style="color:red;">Не удалось удалить сессии</p>
+        {% if error == 'False' %}
+            <p style="color:green;">Все сессии удалены</p>
+        {% else %}
+            <p style="color:red;">Ошибка удаления сессии</p>
+        {% endif %}
     {% endif %}
     <form method="post" action="/user">
         <input type="submit" name="delete_session" value="Удалить свои сессии">

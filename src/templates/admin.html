@@ -27,7 +27,11 @@
         <input type="submit" name="exit" value="Выход">
     </form>
     {% if error %}
-        <p style="color:red;">{{error}}</p>
+        {% if error == 'False' %}
+            <p style="color:green;">Все сессии удалены</p>
+        {% else %}
+            <p style="color:red;">Ошибка удаления сессии</p>
+        {% endif %}
     {% endif %}
 </body>
 </html>
