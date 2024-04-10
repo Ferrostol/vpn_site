@@ -38,7 +38,7 @@ def user():
                         return delete_my_session(username, 'user')
                     case 'exit':
                         return get_start_page(redirected=True)
-            error = bool(request.cookies.get('error'))
+            error = request.cookies.get('error')
             response = make_response(render_template('user.html', username=username, error=error))
             if error:
                 response.delete_cookie('error')
