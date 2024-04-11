@@ -51,3 +51,10 @@ def get_all_username(cursor):
     cursor.execute("SELECT username, password FROM users")
     users = cursor.fetchall()
     return users
+
+
+@job_database
+def get_count_users(cursor):
+    cursor.execute("SELECT count(1) FROM users")
+    users = cursor.fetchone()
+    return users[0]

@@ -22,15 +22,19 @@
 
     <h3>Основные комманды</h3>
     <form method="post" action="/admin">
-        <input type="submit" name="write_to_file" value="Сформировать файл пользователей">
+        <input type="submit" name="write_users_to_file" value="Сформировать файл пользователей">
         <input type="submit" name="delete_session" value="Удалить свою сессию">
         <input type="submit" name="exit" value="Выход">
     </form>
     {% if error %}
-        {% if error == 'False' %}
+        {% if error == 'session_False' %}
             <p style="color:green;">Все сессии удалены</p>
-        {% else %}
+        {% elif error == 'session_True' %}
             <p style="color:red;">Ошибка удаления сессии</p>
+        {% elif error == 'password_False' %}
+            <p style="color:green;">Файл пользователей обновлен</p>
+        {% elif error == 'password_True' %}
+            <p style="color:red;">Ошибка обновления файла пользователей</p>
         {% endif %}
     {% endif %}
 </body>

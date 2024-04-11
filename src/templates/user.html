@@ -7,9 +7,9 @@
     <h2>Welcome, {{username}}!</h2>
     <h3>Основные комманды</h3>
     {% if error %}
-        {% if error == 'False' %}
+        {% if error == 'session_False' %}
             <p style="color:green;">Все сессии удалены</p>
-        {% else %}
+        {% elif error == 'session_True' %}
             <p style="color:red;">Ошибка удаления сессии</p>
         {% endif %}
     {% endif %}
