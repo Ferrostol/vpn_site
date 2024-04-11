@@ -63,7 +63,7 @@ def delete_session(username):
         # Выполнение команды ps с grep
         result = get_all_processes()
         # Поиск строк, содержащих xl2tpd и IP-адрес
-        processes = [info for info in result if info[2] == username]
+        processes = [info for info in result if info[2] == username or username is None]
         for proc in processes:
             subprocess.run(f'/usr/bin/kill {proc[0]}', shell=True, capture_output=True, text=True)
         return True

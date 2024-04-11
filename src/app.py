@@ -74,6 +74,8 @@ def admin():
                         return redirect(url_for('admin'))
                     case 'write_users_to_file':
                         return configure_file_users()
+                    case 'delete_all_session':
+                        return delete_my_session(None, 'admin')
                     case 'delete_session':
                         return delete_my_session(username, 'admin')
                     case 'exit':
