@@ -66,6 +66,8 @@ def delete_session(username):
         processes = [info for info in result if info[2] == username or username is None]
         for proc in processes:
             subprocess.run(f'/usr/bin/kill {proc[0]}', shell=True, capture_output=True, text=True)
+        if username is None:
+            delete_file_logs()
         return True
     except Exception:
         return False
