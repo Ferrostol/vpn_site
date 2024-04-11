@@ -38,5 +38,19 @@
             <p style="color:red;">Ошибка обновления файла пользователей</p>
         {% endif %}
     {% endif %}
+    <table>
+        <tr>
+            <th>PID</th>
+            <th>Local IP</th>
+            <th>Name</th>
+        </tr>
+        {% for line in all_session %}
+            <tr>
+                <td>{{ line[0] }}</td>
+                <td>{{ line[1] }}</td>
+                <td>{{ line[2] }}</td>
+            </tr>
+        {% endfor %}
+    </table>
 </body>
 </html>

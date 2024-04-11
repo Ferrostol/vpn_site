@@ -1,10 +1,13 @@
 from database import get_role_user, add_user, get_count_users
 from flask import render_template, redirect, make_response, url_for
-from server import delete_session, write_users_to_file
+from server import delete_session, write_users_to_file, get_all_processes
 
 
 def check_count_user():
     return get_count_users()
+
+def check_all_processes():
+    return get_all_processes()
 
 def get_start_page(redirected = False, error = False):
     if redirected:

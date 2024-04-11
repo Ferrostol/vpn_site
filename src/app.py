@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, make_response
 from database import create_table, get_role_user
-from logic import get_start_page, check_role, delete_my_session, add_new_user, configure_file_users, get_count_users
+from logic import get_start_page, check_role, delete_my_session, add_new_user, configure_file_users, get_count_users, check_all_processes
 
 # Создаем экземпляр сайта
 app = Flask(__name__)
@@ -81,7 +81,8 @@ def admin():
                     case 'exit':
                         return get_start_page(redirected=True)
             error = request.cookies.get('error')
-            response = make_response(render_template('admin.html', error=error))
+            all_session = check_all_processes()
+            response = make_response(render_template('admin.html', error=error, all_session=all_session))
             if error:
                 response.delete_cookie('error')
             return response
