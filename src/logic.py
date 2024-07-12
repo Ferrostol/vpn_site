@@ -1,4 +1,4 @@
-from database import get_role_user, add_user, get_count_users
+from database import get_role_user, add_user, get_count_users, get_all_username
 from flask import render_template, redirect, make_response, url_for
 from server import delete_session, write_users_to_file, get_all_processes
 
@@ -40,7 +40,7 @@ def delete_my_session(username, to):
 
 
 def configure_file_users():
-    error = write_users_to_file()
+    error = write_users_to_file(get_all_username())
     response = make_response(redirect(url_for('admin')))
     response.set_cookie('error', f'password_{str(error)}')
     return response
