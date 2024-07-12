@@ -85,8 +85,6 @@ def write_users_to_file(users):
             # Записываем данные пользователей в файл
             for username, password in users:
                 file.write(f'"{username}" l2tpd "{password}" *\n')
-        print("Данные успешно записаны в файл:", output_file)
-        
         subprocess.run('systemctl restart xl2tpd.service', shell=True, capture_output=True, text=True)
         return None
     except Exception as e:
