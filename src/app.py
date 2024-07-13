@@ -1,19 +1,25 @@
-import telebot
-from logic import get_all_username
+from telebot import TeleBot, types
+from logic import start_program, check_button, get_markup, check_tg_usr
+from database import get_role_user
 
-token = "7350977496:AAF0krjG8DmLI9O0LgkzvhpEn4INlVYW9R0"
+token = 'token'
 
-bot=telebot.TeleBot(token)
+bot = TeleBot(token)
+start_program()
 
 
 @bot.message_handler(commands=['start'])
-def start_message(message):
-    bot.send_message(message.chat.id,"Привет, проверяем разрешен ли вам доступ к системе")
-    
-    
-@bot.message_handler(commands=['all'])
-def start_message(message):
-    bot.send_message(message.chat.id, f"Все пользователи {get_all_username()}")
+def start_message(message: types.Message):
+    if not check_tg_usr(message):
+        return
+    bot.send_message(message.chat.id, 'Доступные команды', reply_markup=get_markup(get_role_user(message.chat.id)))
+
+
+@bot.message_handler(content_types='text')
+def message_reply(message: types.Message):
+    if not check_tg_usr(message):
+        return
+    check_button(bot, message, get_role_user(message.chat.id))
 
 
 bot.infinity_polling()

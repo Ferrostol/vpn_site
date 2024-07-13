@@ -1,0 +1,13 @@
+[Unit]
+Description=VPN bot
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/root/vpn_bot/src
+Environment="PATH=/root/vpn_bot/venv/bin"
+ExecStart=/root/vpn_bot/venv/bin/python3 /root/vpn_bot/src/app.py
+
+[Install]
+WantedBy=multi-user.target
