@@ -68,7 +68,7 @@ def next_step(message: types.Message, bot: TeleBot, type: str, role: str = None,
             return
         res = enable_user_vpn(message.text, 1) if type == 'unlock_vpn' else enable_user_vpn(message.text, 0)
         if res == 'edit':
-            write_users_to_file([el[0], el[1] for el in get_all_username_vpn(enabled=1)])
+            write_users_to_file([(el[0], el[1]) for el in get_all_username_vpn(enabled=1)])
             msg = 'разблокирован' if type == 'unlock_vpn' else 'заблокирован'
             bot.send_message(message.chat.id, f"Пользователь {msg}", reply_markup=get_markup(role))
         else:
@@ -97,7 +97,7 @@ def next_step(message: types.Message, bot: TeleBot, type: str, role: str = None,
             bot.send_message(message.chat.id, 'Доступные команды', reply_markup=get_markup(role))
         else:
             add_user(args[0], message.text, 'user')
-            write_users_to_file([el[0], el[1] for el in get_all_username_vpn(enabled=1)])
+            write_users_to_file([(el[0], el[1]) for el in get_all_username_vpn(enabled=1)])
             for el in get_all_username(message.text):
                 bot.send_message(message.chat.id, 'Пользователь создан', reply_markup=get_markup(role))
                 break
