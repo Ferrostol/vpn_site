@@ -46,7 +46,7 @@ def next_step(message: types.Message, bot: TeleBot, type: str, role: str = None,
         add_tg_user(message.chat.id, message.from_user.username, 'admin', 1)
         bot.send_message(message.chat.id,"Администратор добавлен в систему")
         return
-    if not check_tg_usr:
+    if not check_tg_usr(bot, message):
         return
     if role == 'admin' and type in ('unlock_tg', 'lock_tg'):
         if message.text == 'Отмена':
