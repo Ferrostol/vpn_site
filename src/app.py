@@ -1,10 +1,9 @@
 from telebot import TeleBot, types
 from logic import start_program, check_button, get_markup, check_tg_usr
 from database import get_role_user
+import os
 
-token = 'token'
-
-bot = TeleBot(token)
+bot = TeleBot(os.getenv('token'))
 start_program()
 
 
