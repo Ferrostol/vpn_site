@@ -154,14 +154,14 @@ def next_step(message: types.Message, bot: TeleBot, type: str, role: str = None,
             bot.send_message(message.chat.id, 'Доступные команды', reply_markup=get_markup(role))
             return
         for el in get_my_account(message.chat.id):
-            if el[0] == message.text:
+            if message.text == 'Все':
+                delete_session(el[0])
+            elif el[0] == message.text:
                 if delete_session(el[0]):
                     bot.send_message(message.chat.id, f'Все сессии {el[0]} удалены', reply_markup=get_markup(role))
                 else:
                     bot.send_message(message.chat.id, f'Ошибка удаления {el[0]} сессий', reply_markup=get_markup(role))
                 break
-            if message.text == 'Все':
-                delete_session(el[0])
         else:
             if message.text == 'Все':
                 bot.send_message(message.chat.id, 'Все привязанные сессии удалены', reply_markup=get_markup(role))
