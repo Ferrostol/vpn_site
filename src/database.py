@@ -147,6 +147,6 @@ def unconnect_user(cursor, usr_id, vpn_name):
 
 @job_database
 def get_all_username_vpn(cursor, enabled = None):
-    cursor.execute("SELECT username, password, status FROM users where (enabled = ? or ? is null)", (enabled, enabled))
+    cursor.execute("SELECT username, password, status FROM users where (status = ? or ? is null)", (enabled, enabled))
     users = cursor.fetchall()
     return users
