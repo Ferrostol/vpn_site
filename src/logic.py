@@ -57,7 +57,7 @@ def next_step(message: types.Message, bot: TeleBot, type: str, role: str = None,
             bot.send_message(message.chat.id, f"Пользователь {msg}", reply_markup=get_markup(role))
             msg = "Вам дали доступ к боту" if type == 'unlock_tg' else "Вам ограничили доступ к боту"
             for usr in get_all_tg_username(message.text, 1):
-                bot.send_message(usr[0], msg, reply_markup=get_markup(role))
+                bot.send_message(usr[0], msg, reply_markup=get_markup(usr[2]))
         else:
             msg = 'разблокировке' if type == 'unlock_tg' else 'блокировке'
             bot.send_message(message.chat.id, f"Ошибка при {msg} пользователя", reply_markup=get_markup(role))
