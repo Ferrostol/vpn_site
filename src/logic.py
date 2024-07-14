@@ -339,7 +339,7 @@ def check_button(bot: TeleBot, message: types.Message, role: str):
         item1=types.KeyboardButton('Отмена')
         row.append(item1)
         markup.add(*row)
-        msg = bot.send_message(message.chat.id, 'Выбирете аккаунт для которого необходимо сбросить сессии', reply_markup=get_markup(role))
+        msg = bot.send_message(message.chat.id, 'Выбирете аккаунт для которого необходимо сбросить сессии', reply_markup=markup)
         bot.register_next_step_handler(msg, next_step, bot, 'del_ses_usr', role)
         return
     bot.send_message(message.chat.id, 'Иди подальше', reply_markup=get_markup(role))
