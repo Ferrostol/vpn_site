@@ -53,13 +53,13 @@ def next_step(message: types.Message, bot: TeleBot, type: str, role: str = None,
             bot.send_message(message.chat.id, 'Доступные команды', reply_markup=get_markup(role))
         res = enable_user_tg(message.text, 1) if type == 'unlock_tg' else enable_user_tg(message.text, 0)
         if res == 'edit':
-            msg = 'разблокирован' if type == 'unlock_vpn' else 'заблокирован'
+            msg = 'разблокирован' if type == 'unlock_tg' else 'заблокирован'
             bot.send_message(message.chat.id, f"Пользователь {msg}", reply_markup=get_markup(role))
-            msg = "Вам дали доступ к боту" if type == 'unlock_vpn' else "Вам ограничили доступ к боту"
+            msg = "Вам дали доступ к боту" if type == 'unlock_tg' else "Вам ограничили доступ к боту"
             for usr in get_all_tg_username(message.text, 1):
                 bot.send_message(usr[0], msg, reply_markup=get_markup(role))
         else:
-            msg = 'разблокировке' if type == 'unlock_vpn' else 'блокировке'
+            msg = 'разблокировке' if type == 'unlock_tg' else 'блокировке'
             bot.send_message(message.chat.id, f"Ошибка при {msg} пользователя", reply_markup=get_markup(role))
         return
     if role == 'admin' and type in ('unlock_vpn', 'lock_vpn'):
