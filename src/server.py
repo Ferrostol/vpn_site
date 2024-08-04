@@ -58,7 +58,7 @@ def get_last_name_for_ip(ip_address):
         return None
     
 
-def delete_session(username):
+def delete_session(username = None):
     try:
         # Выполнение команды ps с grep
         result = get_all_processes()
