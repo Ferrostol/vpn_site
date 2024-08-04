@@ -79,13 +79,14 @@ def next_step(message: types.Message, bot: TeleBot, type: str, role: str = None,
         if message.text == 'Отмена':
             bot.send_message(message.chat.id, 'Доступные команды', reply_markup=get_markup(role))
             return
-        for el in get_all_username(message.text):
-            markup=types.ReplyKeyboardMarkup(resize_keyboard=True)
-            item1=types.KeyboardButton('Отмена')
-            markup.add(item1)
-            msg = bot.send_message(message.chat.id, 'Такой пользователь уже существует. Введите имя нового пользователя', reply_markup=markup)
-            bot.register_next_step_handler(msg, next_step, bot, 'add_vpn_login', role)
-            return
+        for el in get_all_username():
+            if el[0] == message.text:
+                markup=types.ReplyKeyboardMarkup(resize_keyboard=True)
+                item1=types.KeyboardButton('Отмена')
+                markup.add(item1)
+                msg = bot.send_message(message.chat.id, 'Такой пользователь уже существует. Введите имя нового пользователя', reply_markup=markup)
+                bot.register_next_step_handler(msg, next_step, bot, 'add_vpn_login', role)
+                return
         markup=types.ReplyKeyboardMarkup(resize_keyboard=True)
         item1=types.KeyboardButton('Отмена')
         markup.add(item1)

@@ -15,14 +15,14 @@
 
 Обновляем pip
 
-  	~/.python/bin/python3.12 -m pip install -U pip
-   	export PATH=~/.python/bin:$PATH
+	~/.python/bin/python3.12 -m pip install -U pip
+	export PATH=~/.python/bin:$PATH
 
 Скачиваем и запускаем бота
 
-    git clone https://github.com/Ferrostol/vpn_site.git
+	git clone https://github.com/Ferrostol/vpn_site.git
 	cd vpn_site
-    git switch telegram_bot
+	git switch telegram_bot
 	python3.12 -m venv venv
 	. ./venv/bin/activate
 	pip3.12 install -r requirements.txt
