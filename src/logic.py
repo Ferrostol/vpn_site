@@ -99,9 +99,10 @@ def next_step(message: types.Message, bot: TeleBot, type: str, role: str = None,
         else:
             add_user(args[0], message.text, 'user')
             write_users_to_file([(el[0], el[1]) for el in get_all_username_vpn(enabled=1)])
-            for el in get_all_username(message.text):
-                bot.send_message(message.chat.id, 'Пользователь создан', reply_markup=get_markup(role))
-                break
+            for el in get_all_username():
+                if el[0] == args[0]:
+                    bot.send_message(message.chat.id, 'Пользователь создан', reply_markup=get_markup(role))
+                    break
             else:
                 bot.send_message(message.chat.id, 'Пользователь не создан', reply_markup=get_markup(role))
         return
