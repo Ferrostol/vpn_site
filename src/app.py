@@ -13,7 +13,9 @@ start_program()
 def start_message(message: types.Message):
     if not check_tg_usr(bot, message):
         return
-    bot.send_message(message.chat.id, 'Доступные команды', reply_markup=get_markup(get_role_user(message.chat.id)))
+    bot.send_message(message.chat.id,
+                     'Доступные команды',
+                     reply_markup=get_markup(role=get_role_user(message.chat.id)))
 
 
 @bot.message_handler(content_types='text')

@@ -3,7 +3,6 @@ from config import log_file, output_file
 import subprocess
 import os
 
-
 ip_pattern = r'<addr\s+(\d+\.\d+\.\d+\.\d+)>'
 ip_ps_pattern = r'\d+\.\d+\.\d+\.\d+\:(\d+\.\d+\.\d+\.\d+)'
 
@@ -29,14 +28,14 @@ def get_all_processes():
         return processes
     except Exception as e:
         return str(e)
-    
+
 
 def get_last_name_for_ip(ip_address):
     try:
         # Читаем содержимое файла
         with open(log_file, 'r') as file:
             lines = file.readlines()
-        
+
         # Ищем последнее вхождение подстроки
         last_match_index = -1
         ln_line = len(lines)
@@ -44,10 +43,10 @@ def get_last_name_for_ip(ip_address):
             if 'ConfNak' in lines[i] and ip_address in lines[i]:
                 last_match_index = i
                 break
-        
+
         if last_match_index == -1:
             return None
-        
+
         # Ищем строку с "ConfNak" после последнего вхождения подстроки
         for i in range(last_match_index - 1, -1, -1):
             if 'CHAP Response' in lines[i]:
@@ -56,9 +55,9 @@ def get_last_name_for_ip(ip_address):
 
     except FileNotFoundError:
         return None
-    
 
-def delete_session(username = None):
+
+def delete_session(username=None):
     try:
         # Выполнение команды ps с grep
         result = get_all_processes()
