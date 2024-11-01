@@ -28,4 +28,5 @@
 	pip3.12 install -r requirements.txt
 	cp vpn_bot.service /etc/systemd/system
 	systemctl daemon-reload
+	echo "token=YOUR_TOKEN" > src/.env
 	systemctl enable vpn_bot.service
