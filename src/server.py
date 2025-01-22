@@ -66,7 +66,10 @@ def delete_session(username=None):
         for proc in processes:
             subprocess.run(f'/usr/bin/kill {proc[0]}', shell=True, capture_output=True, text=True)
         if username is None:
+            subprocess.run(f'/usr/bin/rm -f /var/locks/*.lock', shell=True, capture_output=True, text=True)
             delete_file_logs()
+        else:
+            subprocess.run(f'/usr/bin/rm -f /var/locks/{username}.lock', shell=True, capture_output=True, text=True)
         return True
     except Exception:
         return False
