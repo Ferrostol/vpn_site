@@ -7,7 +7,7 @@ User=root
 Group=root
 WorkingDirectory=/root/vpn_site/src
 Environment="PATH=/root/vpn_site/venv/bin"
-ExecStart=/root/vpn_site/venv/bin/python3 /root/vpn_site/src/app.py
+ExecStart=/root/vpn_site/venv/bin/python3 -u /root/vpn_site/src/app.py
 
 [Install]
 WantedBy=multi-user.target

@@ -22,7 +22,7 @@
 
 	git clone https://github.com/Ferrostol/vpn_site.git
 	cd vpn_site
-	git switch telegram_bot
+	git switch tg_bot_editable
 	python3.12 -m venv venv
 	. ./venv/bin/activate
 	pip3.12 install -r requirements.txt

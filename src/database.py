@@ -14,7 +14,7 @@ def job_database(func):
             if result == 'edit':
                 conn.commit()
         except sqlite3.Error as e:
-            print("Ошибка при работе с базой данных SQLite:", e)
+            print(f"Ошибка при работе с базой данных SQLite: {e}")
         finally:
             if conn:
                 conn.close()
@@ -92,8 +92,16 @@ def get_count_users(cursor):
 
 @job_database
 def add_tg_user(cursor, telegram_user_id, username, role, enabled):
+    if username is None:
+        username = 'Нет имени пользователя'
     cursor.execute("INSERT INTO tg_users (telegram_user_id, username, role, enabled) VALUES (?, ?, ?, ?)",
                    (telegram_user_id, username, role, enabled))
+    return 'edit'
+
+@job_database
+def delete_tg_user(cursor, telegram_user_id):
+    cursor.execute("delete from tg_users where telegram_user_id = ?",
+                   (telegram_user_id, ))
     return 'edit'
 
 

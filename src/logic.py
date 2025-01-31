@@ -1,25 +1,11 @@
 from database import *
 from telebot import types, TeleBot
+import re
 from server import delete_session, get_all_processes, write_users_to_file
 from prettytable import PrettyTable
+from buttons import *
 
-admin_button = [
-    'Дать доступ пользователю TG',
-    'Заблокировать пользователя TG',
-    'Добавить пользователя VPN',
-    'Разблокировать пользователя VPN',
-    'Заблокировать пользователя VPN',
-    'Удалить все сессии',
-    'Посмотреть текущие сессии',
-    'Посмотреть пользователей TG',
-    'Посмотреть пользователей VPN'
-]
-user_button = [
-    'Посмотреть свои аккаунты',
-    'Привязать аккаунт',
-    'Отвязать аккаунт',
-    'Удалить свои сессии'
-]
+
 
 
 def start_program():
@@ -28,9 +14,6 @@ def start_program():
 
 
 def check_tg_usr(bot: TeleBot, message: types.Message):
-    if message.from_user.is_bot:
-        bot.send_message(message.chat.id, "Доступ запрещен")
-        return False
     if not get_count_users():
         msg = bot.send_message(message.chat.id,
                                "Пользователей нет в системе, Давайте добавим нового пользователя: выберите "
@@ -45,51 +28,25 @@ def check_tg_usr(bot: TeleBot, message: types.Message):
 
 
 def next_step(message: types.Message, bot: TeleBot, type_in: str, role: str = None, *args):
+    
+    if message.from_user.is_bot:
+        bot.send_message(message.chat.id, "Доступ запрещен")
+        return
     if not get_count_users() and type_in == 'first_user':
         add_tg_user(message.chat.id, message.from_user.username, 'admin', 1)
-        bot.send_message(message.chat.id, "Администратор добавлен в систему")
+        bot.send_message(message.chat.id, "Администратор добавлен в систему", reply_markup=get_markup(role=get_role_user(message.chat.id)))
         return
     if not check_tg_usr(bot, message):
         return
-    if role == 'admin' and type_in in ('unlock_tg', 'lock_tg'):
-        if message.text == 'Отмена':
-            bot.send_message(message.chat.id, 'Доступные команды', reply_markup=get_markup(role=role))
-        res = enable_user_tg(message.text, 1) if type_in == 'unlock_tg' else enable_user_tg(message.text, 0)
-        if res == 'edit':
-            msg = 'разблокирован' if type_in == 'unlock_tg' else 'заблокирован'
-            bot.send_message(message.chat.id, f"Пользователь {msg}", reply_markup=get_markup(role=role))
-            msg = "Вам дали доступ к боту" if type_in == 'unlock_tg' else "Вам ограничили доступ к боту"
-            for usr in get_all_tg_username(message.text, 1):
-                bot.send_message(usr[0], msg, reply_markup=get_markup(role=usr[2]))
-        else:
-            msg = 'разблокировке' if type_in == 'unlock_tg' else 'блокировке'
-            bot.send_message(message.chat.id, f"Ошибка при {msg} пользователя", reply_markup=get_markup(role=role))
-        return
-    if role == 'admin' and type_in in ('unlock_vpn', 'lock_vpn'):
-        if message.text == 'Отмена':
-            bot.send_message(message.chat.id, 'Доступные команды', reply_markup=get_markup(role=role))
-            return
-        res = enable_user_vpn(message.text, 1) if type_in == 'unlock_vpn' else enable_user_vpn(message.text, 0)
-        if res == 'edit':
-            write_users_to_file([(el[0], el[1]) for el in get_all_username_vpn(enabled=1)])
-            msg = 'разблокирован' if type_in == 'unlock_vpn' else 'заблокирован'
-            bot.send_message(message.chat.id, f"Пользователь {msg}", reply_markup=get_markup(role=role))
-        else:
-            msg = 'разблокировке' if type_in == 'unlock_vpn' else 'блокировке'
-            bot.send_message(message.chat.id, f"Ошибка при {msg} пользователя", reply_markup=get_markup(role=role))
-        return
     if role == 'admin' and type_in == 'add_vpn_login':
-        if message.text == 'Отмена':
-            bot.send_message(message.chat.id, 'Доступные команды', reply_markup=get_markup(role=role))
-            return
         for el in get_all_username():
             if el[0] == message.text:
                 msg = bot.send_message(message.chat.id,
                                        'Такой пользователь уже существует. Введите имя нового пользователя',
-                                       reply_markup=get_markup(cancel=True))
+                                       reply_markup=get_markup(lst=[back_button('admin')]))
                 bot.register_next_step_handler(msg, next_step, bot, 'add_vpn_login', role)
                 return
-        msg = bot.send_message(message.chat.id, 'Введите пароль для пользователя', reply_markup=get_markup(cancel=True))
+        msg = bot.send_message(message.chat.id, 'Введите пароль для пользователя', reply_markup=get_markup(lst=[back_button('admin')]))
         bot.register_next_step_handler(msg, next_step, bot, 'add_vpn_password', role, message.text)
         return
     if role == 'admin' and type_in == 'add_vpn_password':
@@ -112,10 +69,10 @@ def next_step(message: types.Message, bot: TeleBot, type_in: str, role: str = No
         for el in get_my_account(message.chat.id):
             if el[0] == message.text:
                 msg = bot.send_message(message.chat.id, 'Данный аккаунт уже привязан к вам',
-                                       reply_markup=get_markup(cancel=True))
+                                       reply_markup=get_markup(lst=[back_button('start')]))
                 bot.register_next_step_handler(msg, next_step, bot, 'connect_vpn_login', role)
                 return
-        msg = bot.send_message(message.chat.id, 'Введите пароль для пользователя', reply_markup=get_markup(cancel=True))
+        msg = bot.send_message(message.chat.id, 'Введите пароль для пользователя', reply_markup=get_markup(lst=[back_button('start')]))
         bot.register_next_step_handler(msg, next_step, bot, 'connect_vpn_password', role, message.text)
         return
     if type_in == 'connect_vpn_password':
@@ -131,42 +88,7 @@ def next_step(message: types.Message, bot: TeleBot, type_in: str, role: str = No
                                          reply_markup=get_markup(role=role))
                     return
         return
-    if type_in == 'unconnect':
-        accounts = get_my_account(message.chat.id)
-        if not len(accounts):
-            bot.send_message(message.chat.id, "Нечего отвязывать", reply_markup=get_markup(role=role))
-            return
-        for el in accounts:
-            if el[0] == message.text:
-                if unconnect_user(message.chat.id, el[0]) == 'edit':
-                    bot.send_message(message.chat.id, "Аккаунт отвязан")
-                else:
-                    bot.send_message(message.chat.id, "Ошибка отвязки аккаунта")
-                break
-        else:
-            bot.send_message(message.chat.id, "Такого аккаунта нет в привязанных")
-        bot.send_message(message.chat.id, 'Доступные команды', reply_markup=get_markup(role=role))
-    if type_in == 'del_ses_usr':
-        if message.text == 'Отмена':
-            bot.send_message(message.chat.id, 'Доступные команды', reply_markup=get_markup(role=role))
-            return
-        for el in get_my_account(message.chat.id):
-            if message.text == 'Все':
-                delete_session(el[0])
-            elif el[0] == message.text:
-                if delete_session(el[0]):
-                    bot.send_message(message.chat.id, f'Все сессии {el[0]} удалены', reply_markup=get_markup(role=role))
-                else:
-                    bot.send_message(message.chat.id, f'Ошибка удаления {el[0]} сессий',
-                                     reply_markup=get_markup(role=role))
-                break
-        else:
-            if message.text == 'Все':
-                bot.send_message(message.chat.id, 'Все привязанные сессии удалены', reply_markup=get_markup(role=role))
-            else:
-                bot.send_message(message.chat.id, 'Такого пользователя нет в привязанных',
-                                 reply_markup=get_markup(role=role))
-
+    
 
 def check_enable_user(user_id, username):
     enabled = get_enable_user(user_id)
@@ -178,21 +100,18 @@ def check_enable_user(user_id, username):
     return False
 
 
-def get_markup(role: str = None, lst=None, cancel=False):
+def get_markup(role: str = None, lst=None):
     row = []
-    fn = lambda x: row.append(types.KeyboardButton(x))
+    fn = lambda x: row.append(types.InlineKeyboardButton(x.caption, callback_data=x.key))
     if lst is not None:
         for el in lst:
             fn(el)
-    if role is not None:
+    elif role is not None:
         if role == 'admin':
-            for el in admin_button:
-                fn(el)
-        for el in user_button:
+            fn(admin_button)
+        for el in user_buttons:
             fn(el)
-    if cancel:
-        fn('Отмена')
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(*row)
     return markup
 
@@ -205,103 +124,243 @@ def get_table_str(head: list, data: list):
     return f"<pre>{table}</pre>"
 
 
-def check_button(bot: TeleBot, message: types.Message, role: str):
-    if role == 'admin' and message.text == "Дать доступ пользователю TG":
-        blocked = get_all_tg_username(enabled=0)
+
+def check_button_call(bot: TeleBot, call, role: str):
+    def admin_page(x): 
+        try:
+            bot.edit_message_text(
+                x,
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                reply_markup=get_markup(lst=[*admin_buttons, back_button('start')])
+            )
+        except Exception as e:
+            pass
+    def start_page(x):
+        try:
+            bot.edit_message_text(
+                x,
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                reply_markup=get_markup(role=get_role_user(call.from_user.id))
+            )
+        except Exception as e:
+            pass
+    
+    def extract_text(s, matchs):
+        match = re.search(f'(?:{matchs})(.*)', s)
+        return match.group(1) if match else None
+    
+    if call.data == back_button('start').key:
+        bot.edit_message_text(
+            "Выберите действие",
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            reply_markup=get_markup(role=get_role_user(call.from_user.id))
+        )
+    elif role == 'admin' and (call.data == admin_button.key or call.data == back_button('admin').key):
+        admin_page("Выберите действие")
+    elif role == 'admin' and call.data in (unlock_tg_button.key, lock_tg_button.key, unlock_vpn_button.key, lock_vpn_button.key):
+        if call.data == unlock_tg_button.key:
+            type_in = unlock_tg_button
+            blocked = [el[1] for el in get_all_tg_username(enabled=0)]
+            text = 'разблокировки'
+        elif call.data == lock_tg_button.key:
+            type_in = lock_tg_button
+            blocked = [el[1] for el in get_all_tg_username(enabled=1)]
+            text = 'блокировки'
+        elif call.data == unlock_vpn_button.key:
+            type_in = unlock_vpn_button
+            blocked = [el[0] for el in get_all_username_vpn(0)]
+            text = 'разблокировки'
+        elif call.data == lock_vpn_button.key:
+            type_in = lock_vpn_button
+            blocked = [el[0] for el in get_all_username_vpn(1)]
+            text = 'блокировки'
+        
+        lst_btn = [Button(f'{type_in.key}_{el}', el) for el in blocked]
+
         if not len(blocked):
-            bot.send_message(message.chat.id, "Заблокированных пользователей нет", reply_markup=get_markup(role))
+            admin_page("Пользователей нет")
             return
-        msg = bot.send_message(message.chat.id, 'Выберите пользователя для разблокировки',
-                               reply_markup=get_markup(lst=[el[1] for el in blocked], cancel=True))
-        bot.register_next_step_handler(msg, next_step, bot, 'unlock_tg', role)
-        return
-    if role == 'admin' and message.text == 'Заблокировать пользователя TG':
-        users = get_all_tg_username(enabled=1)
-        if not len(users):
-            bot.send_message(message.chat.id, "Пользователей нет", reply_markup=get_markup(role))
-            return
-        msg = bot.send_message(message.chat.id, 'Выберите пользователя для блокировки',
-                               reply_markup=get_markup(lst=[el[1] for el in users], cancel=True))
-        bot.register_next_step_handler(msg, next_step, bot, 'lock_tg', role)
-        return
-    if role == 'admin' and message.text == 'Добавить пользователя VPN':
-        msg = bot.send_message(message.chat.id, 'Введите имя нового пользователя', reply_markup=get_markup(cancel=True))
-        bot.register_next_step_handler(msg, next_step, bot, 'add_vpn_login', role)
-        return
-    if role == 'admin' and message.text in ('Заблокировать пользователя VPN', 'Разблокировать пользователя VPN'):
-        if message.text == 'Заблокировать пользователя VPN':
-            users = get_all_username_vpn(1)
+        bot.edit_message_text(
+            f'Выберите пользователя для {text}',
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            reply_markup=get_markup(lst=[*lst_btn, back_button('admin')])
+        )
+    elif role == 'admin' and (str(call.data).startswith(unlock_tg_button.key) or str(call.data).startswith(lock_tg_button.key)):
+        type_in = str(call.data).startswith(unlock_tg_button.key)
+        user = extract_text(call.data, f'{unlock_tg_button.key}_|{lock_tg_button.key}_')
+        res = enable_user_tg(user, 1) if type_in else enable_user_tg(user, 0)
+        if res == 'edit':
+            msg = 'разблокирован' if type_in else 'заблокирован'
+            admin_page(f"Пользователь {msg}")
+            msg = "Вам дали доступ к боту" if type_in else "Вам ограничили доступ к боту"
+            for usr in get_all_tg_username(user, 1):
+                try:
+                    bot.send_message(usr[0], msg, reply_markup=get_markup(role=usr[2]))
+                except Exception as e:
+                    pass
         else:
-            users = get_all_username_vpn(0)
-        if not len(users):
-            bot.send_message(message.chat.id, "Пользователей нет", reply_markup=get_markup(role))
-            return
-        msg = bot.send_message(message.chat.id, 'Выберите пользователя для блокировки',
-                               reply_markup=get_markup(lst=[el[0] for el in users], cancel=True))
-        if message.text in 'Заблокировать пользователя VPN':
-            bot.register_next_step_handler(msg, next_step, bot, 'lock_vpn', role)
+            msg = 'разблокировке' if type_in else 'блокировке'
+            admin_page(f"Ошибка при {msg} пользователя")
+    elif role == 'admin' and (str(call.data).startswith(unlock_vpn_button.key) or str(call.data).startswith(lock_vpn_button.key)):
+        type_in = str(call.data).startswith(unlock_vpn_button.key)
+        user = extract_text(call.data, f'{unlock_vpn_button.key}_|{lock_vpn_button.key}_')
+        res = enable_user_vpn(user, 1) if type_in else enable_user_vpn(user, 0)
+        if res == 'edit':
+            write_users_to_file([(el[0], el[1]) for el in get_all_username_vpn(enabled=1)])
+            msg = 'разблокирован' if type_in else 'заблокирован'
+            admin_page(f"Пользователь {msg}")
+            msg = "Вам дали доступ к боту" if type_in else "Вам ограничили доступ к боту"
+            for usr in get_all_tg_username(user, 1):
+                bot.send_message(usr[0], msg, reply_markup=get_markup(role=usr[2]))
         else:
-            bot.register_next_step_handler(msg, next_step, bot, 'unlock_vpn', role)
-        return
-    if role == 'admin' and message.text == 'Удалить все сессии':
+            msg = 'разблокировке' if type_in else 'блокировке'
+            admin_page(f"Ошибка при {msg} пользователя")
+    elif role == 'admin' and call.data == delete_tg_button.key:
+        lst_btn = [Button(f'{delete_tg_button.key}_{el[0]}', el[1]) for el in get_all_tg_username()]
+        if not len(lst_btn):
+            admin_page("Пользователей нет")
+            return
+        bot.edit_message_text(
+            f'Выберите пользователя для удаления',
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            reply_markup=get_markup(lst=[*lst_btn, back_button('admin')])
+        )
+    elif role == 'admin' and str(call.data).startswith(delete_tg_button.key):
+        user = extract_text(call.data, f'{delete_tg_button.key}_')
+        res = delete_tg_user(user)
+        if res == 'edit':
+            admin_page(f"Пользователь удален")
+        else:
+            admin_page(f"Ошибка при удалении пользователя {res}")
+    elif role == 'admin' and call.data == del_all_ses_button.key:
         if delete_session():
-            bot.send_message(message.chat.id, 'Все сессии удалены', reply_markup=get_markup(role=role))
+            admin_page('Все сессии удалены')
         else:
-            bot.send_message(message.chat.id, 'Ошибка удаления сессий', reply_markup=get_markup(role=role))
-        return
-    if role == 'admin' and message.text == 'Посмотреть текущие сессии':
+            admin_page('Ошибка удаления сессий')
+    elif role == 'admin' and call.data == show_all_ses_button.key:
         data = get_all_processes()
         if not len(data):
-            bot.send_message(message.chat.id, 'Список сессий пуст', reply_markup=get_markup(role=role))
+            admin_page('Список сессий пуст')
             return
         table_str = get_table_str(['PID', 'Local IP', 'Name'], data)
-        bot.send_message(message.chat.id, table_str, parse_mode="HTML", reply_markup=get_markup(role=role))
-        return
-    if role == 'admin' and message.text == 'Посмотреть пользователей TG':
+        try:
+            bot.edit_message_text(
+                table_str,
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                parse_mode="HTML",
+                reply_markup=get_markup(lst=[show_all_ses_button, back_button('admin')])
+            )
+        except Exception as e:
+            pass
+    elif role == 'admin' and call.data == show_all_tg_user_button.key:
         data = get_all_tg_username()
         if not len(data):
-            bot.send_message(message.chat.id, 'Список пользователей пуст', reply_markup=get_markup(role=role))
+            admin_page('Список пользователей пуст')
             return
         table_str = get_table_str(['USR_ID', 'NAME', 'ROLE', 'ENABLED'], data)
-        bot.send_message(message.chat.id, table_str, parse_mode="HTML", reply_markup=get_markup(role=role))
-        return
-    if role == 'admin' and message.text == 'Посмотреть пользователей VPN':
+        bot.edit_message_text(
+            table_str,
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            parse_mode="HTML",
+            reply_markup=get_markup(lst=[back_button('admin')])
+        )
+    elif role == 'admin' and call.data == show_all_vpn_user_button.key:
         data = get_all_username_vpn()
         if not len(data):
-            bot.send_message(message.chat.id, 'Список пользователей пуст', reply_markup=get_markup(role=role))
+            admin_page('Список пользователей пуст')
             return
         table_str = get_table_str(['USR', 'PASSWORD', 'STATUS'], data)
-        bot.send_message(message.chat.id, table_str, parse_mode="HTML", reply_markup=get_markup(role=role))
-        return
-    if message.text == 'Посмотреть свои аккаунты':
-        data = get_my_account(message.chat.id)
+        bot.edit_message_text(
+            table_str,
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            parse_mode="HTML",
+            reply_markup=get_markup(lst=[back_button('admin')])
+        )
+    elif role == 'admin' and call.data == add_user_vpn_button.key:
+        msg = bot.send_message(call.message.chat.id, 'Введите имя нового пользователя', reply_markup=get_markup(lst=[back_button('admin')]))
+        bot.register_next_step_handler(msg, next_step, bot, 'add_vpn_login', role)
+    elif call.data == connect_acc_button.key:
+        msg = bot.send_message(call.message.chat.id, 'Введите логин вашего пользователя', reply_markup=get_markup(lst=[back_button('start')]))
+        bot.register_next_step_handler(msg, next_step, bot, 'connect_vpn_login', role)
+    elif call.data == show_my_acc_button.key:
+        data = get_my_account(call.from_user.id)
         if not len(data):
-            bot.send_message(message.chat.id, 'У вас нет аккаунтов', reply_markup=get_markup(role=role))
+            start_page('У вас нет аккаунтов')
             return
         table_str = get_table_str(['USR', 'PASSWORD'], data)
-        bot.send_message(message.chat.id, table_str, parse_mode="HTML", reply_markup=get_markup(role=role))
-        return
-    if message.text == 'Привязать аккаунт':
-        msg = bot.send_message(message.chat.id, 'Введите логин вашего пользователя',
-                               reply_markup=get_markup(cancel=True))
-        bot.register_next_step_handler(msg, next_step, bot, 'connect_vpn_login', role)
-        return
-    if message.text == 'Отвязать аккаунт':
-        accounts = get_my_account(message.chat.id)
-        if not len(accounts):
-            bot.send_message(message.chat.id, "Нечего отвязывать", reply_markup=get_markup(role))
-            return
-        msg = bot.send_message(message.chat.id, 'Выберите аккаунт для отвязки',
-                               reply_markup=get_markup(lst=[el[0] for el in accounts], cancel=True))
-        bot.register_next_step_handler(msg, next_step, bot, 'unconnect', role)
-        return
-    if message.text == 'Удалить свои сессии':
-        data = get_my_account(message.chat.id)
+        bot.edit_message_text(
+            table_str,
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            parse_mode="HTML",
+            reply_markup=get_markup(lst=[back_button('start')])
+        )
+    elif call.data == del_my_ses_button.key:
+        data = get_my_account(call.from_user.id)
         if not len(data):
-            bot.send_message(message.chat.id, 'У вас нет аккаунтов', reply_markup=get_markup(role=role))
+            start_page('У вас нет аккаунтов')
             return
-        msg = bot.send_message(message.chat.id, 'Выбирете аккаунт для которого необходимо сбросить сессии',
-                               reply_markup=get_markup(lst=[el[0] for el in data] + ['Все'], cancel=True))
-        bot.register_next_step_handler(msg, next_step, bot, 'del_ses_usr', role)
-        return
-    bot.send_message(message.chat.id, 'Иди подальше', reply_markup=get_markup(role=role))
+        btn = [Button(f'{del_my_ses_button.key}_{el[0]}', el[0]) for el in data]
+        btn.append(all_button)
+        btn.append(back_button('start'))
+        bot.edit_message_text(
+            'Выберете аккаунт для которого необходимо сбросить сессии',
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            reply_markup=get_markup(lst=btn)
+        )
+    elif (str(call.data).startswith(del_my_ses_button.key) or call.data == all_button.key):
+        user = extract_text(call.data, f'{del_my_ses_button.key}_')
+        text = []
+        for el in get_my_account(call.from_user.id):
+            if call.data == all_button.key or (not user is None and el[0] == user):
+                if delete_session(el[0]):
+                    text.append(f'Все сессии {el[0]} удалены')
+                else:
+                    text.append(f'Ошибка удаления {el[0]} сессий')
+                if not user is None and el[0] == user:
+                    break
+        else:
+            if call.data == all_button.key:
+                text.append('Все привязанные сессии удалены')
+            else:
+                text.append(f'Пользователя {user} нет в списке привязанных')
+        start_page('\n'.join(text))
+    elif call.data == unconnect_acc_button.key:
+        data = get_my_account(call.from_user.id)
+        if not len(data):
+            start_page('У вас нет аккаунтов')
+            return
+        btn = [Button(f'{unconnect_acc_button.key}_{el[0]}', el[0]) for el in data]
+        btn.append(back_button('start'))
+        bot.edit_message_text(
+            'Выберете аккаунт для отвязки',
+            chat_id=call.message.chat.id,
+            message_id=call.message.message_id,
+            reply_markup=get_markup(lst=btn)
+        )
+    elif str(call.data).startswith(unconnect_acc_button.key):
+        user = extract_text(call.data, f'{unconnect_acc_button.key}_')
+        accounts = get_my_account(call.from_user.id)
+        if not len(accounts):
+            start_page("Нечего отвязывать")
+            return
+        for el in accounts:
+            if el[0] == user:
+                if unconnect_user(call.from_user.id, el[0]) == 'edit':
+                    start_page("Аккаунт отвязан")
+                else:
+                    start_page("Ошибка отвязки аккаунта")
+                break
+        else:
+            start_page("Такого аккаунта нет в привязанных")
+    else:
+        bot.send_message(call.message.chat.idcall.message.chat.id, 'Иди подальше', reply_markup=get_markup(role=role))
