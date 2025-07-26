@@ -27,34 +27,6 @@
 
 
 
-Если нужна настройка для ограничения 1 пользователь = 1 сессия, то настраиваем далее, если нет, то переходим к "Перезагружаем службы":
-
-	cp server/peer-lock.sh /etc/ppp
-	mkdir /var/locks
-	chmod 777 /var/locks
-	vim /etc/ppp/ip-up
-
-Добавляем в середину строки:
-
-	if [ -x /etc/ppp/peer-lock.sh ]; then
-		/etc/ppp/peer-lock.sh
-		if [ $? -ne 0 ]; then
-			kill $PPPD_PID
-			exit 1
-		fi
-	fi
-
-Выполняем команду:
-
-	echo "rm -f /var/locks/$PEERNAME.lock" >> /etc/ppp/ip-down
-
-
-Перезагружаем службы:
-
-	systemctl restart ipsec.service
-	systemctl restart xl2tpd.service
-
-
 Устанавливаем Python:
  
 	wget https://www.python.org/ftp/python/3.12.2/Python-3.12.2.tgz ; \
@@ -82,6 +54,38 @@
 	systemctl daemon-reload
 	echo "token=YOUR_TOKEN" > src/.env
 	systemctl enable vpn_bot.service
+
+
+Если нужна настройка для ограничения 1 пользователь = 1 сессия, то настраиваем далее, если нет, то переходим к "Если не нужна настройка":
+
+	cp server/peer-lock.sh /etc/ppp
+	mkdir /var/locks
+	chmod 777 /var/locks
+	vim /etc/ppp/ip-up
+
+Добавляем в середину строки:
+
+	if [ -x /etc/ppp/peer-lock.sh ]; then
+		/etc/ppp/peer-lock.sh
+		if [ $? -ne 0 ]; then
+			kill $PPPD_PID
+			exit 1
+		fi
+	fi
+
+Выполняем команду:
+
+	echo "rm -f /var/locks/$PEERNAME.lock" >> /etc/ppp/ip-down
+	echo "MULTI_CONNECT=N" >> src/.env
+ 
+Если не нужна настройка "1 пользователь = 1 сессия", то выполняем команду:
+
+	echo "MULTI_CONNECT=Y" >> src/.env
+
+Перезагружаем службы:
+
+	systemctl restart ipsec.service
+	systemctl restart xl2tpd.service
 
 
 После этого пишем боту /start и регистрируемся первыми в качестве администратора

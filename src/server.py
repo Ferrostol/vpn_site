@@ -2,6 +2,11 @@ import re
 from config import log_file, output_file
 import subprocess
 import os
+from dotenv import load_dotenv
+load_dotenv()
+
+multi_connect = True if os.getenv('MULTI_CONNECT') in ('Yy') else False
+
 
 ip_pattern = r'<addr\s+(\d+\.\d+\.\d+\.\d+)>'
 ip_ps_pattern = r'\d+\.\d+\.\d+\.\d+\:(\d+\.\d+\.\d+\.\d+)'
@@ -65,11 +70,14 @@ def delete_session(username=None):
         processes = [info for info in result if info[2] == username or username is None]
         for proc in processes:
             subprocess.run(f'/usr/bin/kill {proc[0]}', shell=True, capture_output=True, text=True)
-        if username is None:
-            subprocess.run(f'/usr/bin/rm -f /var/locks/*.lock', shell=True, capture_output=True, text=True)
+        if multi_connect:
+            if username is None:
+                subprocess.run(f'/usr/bin/rm -f /var/locks/*.lock', shell=True, capture_output=True, text=True)
+                delete_file_logs()
+            else:
+                subprocess.run(f'/usr/bin/rm -f /var/locks/{username}.lock', shell=True, capture_output=True, text=True)
+        elif username is None:
             delete_file_logs()
-        else:
-            subprocess.run(f'/usr/bin/rm -f /var/locks/{username}.lock', shell=True, capture_output=True, text=True)
         return True
     except Exception:
         return False
