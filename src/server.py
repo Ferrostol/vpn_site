@@ -1,13 +1,14 @@
 import re
-from config import log_file, output_file
 import subprocess
 import os
+
 from dotenv import load_dotenv
+
+from config import log_file, output_file
+
+
 load_dotenv()
-
 multi_connect = True if os.getenv('MULTI_CONNECT') in ('Yy') else False
-
-
 ip_pattern = r'<addr\s+(\d+\.\d+\.\d+\.\d+)>'
 ip_ps_pattern = r'\d+\.\d+\.\d+\.\d+\:(\d+\.\d+\.\d+\.\d+)'
 
