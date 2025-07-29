@@ -1,45 +1,317 @@
+# Что должна делать кнопка. Параметры которые можно заполнить в edit_message_text:
+# - text - текст сообщения(возможно таблицу)
+# - editable - редактируем или пишем новое сообщение
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
+from prettytable import PrettyTable
+
+from database import *
+from server import *
+
+
+razdelitel = '__'
+
+
 class Button:
-    def __init__(self, key: str, caption: str):
+    def __init__(
+            self,
+            key: str,                       # Ключ, по которому можно идентифицировать кнопку
+            caption: str,                   # Отображаемое пользователю название кнопки
+            text: str = None,               # Отображаемый пользователю текст вместе с кнопками
+            buttons: list["Button"] = None, # Кнопки, которые находятся после нажатия данной кнопки
+            is_admin: bool = False,         # Кнопка только для администратора
+            can_back: bool = None,          # Необходимость добавления кнопки "Назад", в список кнопок
+            parse_mode: str = None,         # Действие кнопки выводит определенный тип содержимого
+            is_custom_keys: bool = False,   # Использовать вместо заранее заготовленных кнопок список кнопок полученных через функцию
+            custom_keys_def = None,         # lambda функция по генерации списка кнопок, которые находятся после нажатия данной кнопки
+            analize = None,                 # lambda функция условия для захода в кнопку
+            is_work: bool = False,          # Нажатие кнопки выполняет действие
+            work_def = None                 # lambda функция действия при нажатии кнопки
+    ):
+        if text is None:
+            text = caption
+        if buttons is None:
+            buttons = []
+
         self.key = key
         self.caption = caption
+        self.text = text
+        self.buttons = buttons
+        self.is_admin = is_admin
+        self.is_back = key.endswith(f'{razdelitel}back')
+        self.parse_mode = parse_mode
+        self.is_custom_keys = is_custom_keys
+        self.custom_keys_def = custom_keys_def
+        self.can_back = can_back
+        self.analize = analize if analize is not None else lambda x, *args: None
+        self.is_work = is_work
+        self.work_def = work_def
+        self.prev_button: Button = None
+        self.keys_search = key
+
+        if (can_back if can_back is not None else len(self.buttons) > 0) and not self.is_custom_keys:
+            self.buttons.append(Button(f'{self.keys_search}{razdelitel}back', 'Назад', "Назад"))
+
+        for btn in self.buttons:
+            btn.prev_button = self
+            if self.is_admin:
+                btn.is_admin = self.is_admin
+        self.__update_children_button()
 
 
-cancel_button = Button('cancel', 'Отмена')
-back_button = lambda x: Button(f'back_{x}', 'Назад')
-admin_button = Button('admin', 'Админ')
+    def __update_children_button(self):
+        for btn in self.buttons:
+            btn.keys_search = f"{self.keys_search}{razdelitel}{btn.key}"
+            if self.is_admin:
+                btn.is_admin = self.is_admin
+            btn.__update_children_button()
 
-unlock_tg_button = Button('unlock_tg', 'Дать доступ пользователю TG')
-delete_tg_button = Button('delete_tg', 'Удалить пользователя TG')
-lock_tg_button = Button('lock_tg', 'Заблокировать пользователя TG')
-add_user_vpn_button = Button('add_user_vpn', 'Добавить пользователя VPN')
-unlock_vpn_button = Button('unlock_vpn', 'Разблокировать пользователя VPN')
-lock_vpn_button = Button('lock_vpn', 'Заблокировать пользователя VPN')
-del_all_ses_button = Button('del_all_ses', 'Удалить все сессии')
-show_all_ses_button = Button('show_all_ses', 'Посмотреть текущие сессии')
-show_all_tg_user_button = Button('show_all_tg_user', 'Посмотреть пользователей TG')
-show_all_vpn_user_button = Button('show_all_vpn_user', 'Посмотреть пользователей VPN')
 
-show_my_acc_button = Button('show_my_acc', 'Посмотреть свои аккаунты')
-connect_acc_button = Button('connect_acc', 'Привязать аккаунт')
-unconnect_acc_button = Button('unconnect_acc', 'Отвязать аккаунт')
-del_my_ses_button = Button('del_my_ses', 'Удалить свои сессии')
-all_button = Button('all_delete', 'Все')
+    def get_keys(self, *args):
+        if self.is_custom_keys:
+            btns = self.custom_keys_def(self.key, *args)
+            if self.can_back:
+                btns.append(Button(f'{self.key}{razdelitel}back', 'Назад', "Назад"))
+            for btn in btns:
+                btn.prev_button = self
+                btn.keys_search = f"{self.keys_search}{razdelitel}{btn.key}"
+                btn.__update_children_button()
+        else:
+            btns = self.buttons
+        return btns
 
-admin_buttons = [
-    unlock_tg_button,
-    lock_tg_button,
-    delete_tg_button,
-    add_user_vpn_button,
-    unlock_vpn_button,
-    lock_vpn_button,
-    del_all_ses_button,
-    show_all_ses_button,
-    show_all_tg_user_button,
-    show_all_vpn_user_button
-]
-user_buttons = [
-    show_my_acc_button,
-    connect_acc_button,
-    unconnect_acc_button,
-    del_my_ses_button
-]
+
+    def get_markup(self, role: str = 'user', chat_id = None):
+        row = []
+        for el in self.get_keys(chat_id):
+            if not el.check_secure_user(role):
+                continue
+            row.append(InlineKeyboardButton(el.caption, callback_data=el.keys_search))
+        markup = InlineKeyboardMarkup(row_width=1)
+        markup.add(*row)
+        return markup
+
+    def get_prev_button(self, up_up: bool = False):
+        if self.is_back or up_up: #Возвращаем кнопку на два уровня выше от кнопки Назад или если надо подняться на два уровня
+            if self.prev_button.prev_button is not None:
+                return self.prev_button.prev_button
+        return self.prev_button
+
+    def check_secure_user(self, role):
+        if self.is_admin and role != 'admin':
+            return False
+        return True
+
+    @staticmethod
+    def get_buttons(btns: "Button", role: str, search_key: str, *args):
+        def get_button(btn, role: str, search_key: str):
+            if not btn.check_secure_user(role):
+                return None
+            if not search_key.startswith(btn.keys_search):
+                return None
+            if btn.keys_search == search_key:
+                return btn
+            for el in btn.get_keys(*args):
+                sb = get_button(el, role, search_key)
+                if not sb is None:
+                    return sb
+            return None
+
+        btn = get_button(btns, role, search_key)
+        if btn is None:
+            btn = btns
+
+        if btn.is_back:
+            btn = btn.get_prev_button()
+        return btn
+
+
+class Result:
+    def __init__(self, btn: Button, text: str, next_step = None):
+        self.btn = btn
+        self.text = text
+        self.next_step = next_step
+
+
+
+# Для создания рекурсивных функций
+def make_recursive_lambda(template):
+    return (lambda f: lambda *args: template(f(f), *args))(
+           lambda f: lambda *args: template(f(f), *args))
+
+
+def get_table_str(head: list, data: list):
+    table = PrettyTable()
+    table.field_names = head  # Установка заголовков столбцов
+    for row in data:
+        table.add_row(row)
+    return f"<pre>{table}</pre>"
+
+
+def extract_text(s, matchs):
+    match = re.search(f'(?:{matchs})(.*)', s)
+    return match.group(1) if match else None
+
+
+
+
+
+
+
+start_buttons = Button('start', 'Начало', 'Выберите действие', can_back=False, buttons=[
+    Button('admin', 'Админ', 'Выберите действие', is_admin=True, buttons=[
+        Button('unlock_tg', 'Дать доступ пользователю TG', 'Выберите пользователя для разблокировки', can_back=True, is_custom_keys=True,
+               custom_keys_def=lambda key, *args: [
+                   Button(f"{key}_{el[0]}", el[1], is_work=True,
+                          work_def=lambda self_btn, *arg: Result(self_btn.get_prev_button(True),
+                                                           "Пользователь разблокирован"
+                                                           if enable_user_tg(extract_text(self_btn.key, f'{self_btn.prev_button.key}_'), 1) == 'edit'
+                                                           else f"Ошибка при разблокировке пользователя {el[1]}"))
+                   for el in get_all_tg_username(enabled=0)
+               ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
+
+        Button('delete_tg', 'Удалить пользователя TG', 'Выберите пользователя для удаления', can_back=True, is_custom_keys=True,
+               custom_keys_def=lambda key, *args: [
+                   Button(f"{key}_{el[0]}", el[1], is_work=True,
+                          work_def=lambda self_btn, chat_id, *arg: Result(self_btn.get_prev_button(True),
+                                                           "Пользователь удален"
+                                                           if delete_tg_user(extract_text(self_btn.key, f'{self_btn.prev_button.key}_')) == 'edit'
+                                                           else f"Ошибка при удалении пользователя {el[1]}"))
+                   for el in get_all_tg_username()
+               ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
+
+        Button('lock_tg', 'Заблокировать пользователя TG', 'Выберите пользователя для блокировки', can_back=True, is_custom_keys=True,
+               custom_keys_def=lambda key, *args: [
+                   Button(f"{key}_{el[0]}", el[1], is_work=True,
+                          work_def=lambda self_btn, *arg: Result(self_btn.get_prev_button(True),
+                                                           "Пользователь заблокирован"
+                                                           if enable_user_tg(extract_text(self_btn.key, f'{self_btn.prev_button.key}_'), 0) == 'edit'
+                                                           else f"Ошибка при блокировке пользователя {el[1]}"))
+                   for el in get_all_tg_username(enabled=1)
+               ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
+
+        Button('add_user_vpn', 'Добавить пользователя VPN', can_back=True, is_work=True,
+               work_def=lambda self, chat_id, role, *arg: Result(
+                   self, 'Введите имя нового пользователя', make_recursive_lambda(lambda self_func, login, login_role, *args: (
+                       Result(Button.get_buttons(start_buttons, login_role, self.keys_search),'Ошибка создания пользователя')
+                       if not self.check_secure_user(login_role)
+                       else Result(self, "Введите пароль для пользователя", make_recursive_lambda(lambda self_func_pass, password, password_role, *args_2: (
+                           Result(Button.get_buttons(start_buttons, password_role, self.keys_search), 'Ошибка создания пользователя')
+                           if not self.check_secure_user(password_role)
+                           else Result(self.prev_button, 'Пользователь создан')
+                           if (
+                               add_user(login, password, 'user'),
+                               write_users_to_file([(el[0], el[1]) for el in get_all_username_vpn(enabled=1)]),
+                               len([el for el in get_all_username() if el[0] == login])
+                           )[-1] > 0
+                           else Result(self.prev_button, "Пользователь не создан")
+                       )))
+                       if len([el for el in get_all_username() if el[0] == login]) == 0
+                       else Result(self, "Такой пользователь уже существует. Введите имя нового пользователя", self_func)
+               ))
+           )),
+
+        Button('unlock_vpn', 'Разблокировать пользователя VPN', 'Выберите пользователя для разблокировки', can_back=True, is_custom_keys=True,
+               custom_keys_def=lambda key, *args: [
+                   Button(f"{key}_{el[0]}", el[0], is_work=True,
+                          work_def=lambda self_btn, *arg: Result(self_btn.get_prev_button(True),
+                                                              f"Ошибка при разблокировки пользователя {el[1]}"
+                                                              if not enable_user_vpn(extract_text(self_btn.key, f'{self_btn.prev_button.key}_'), 1) == 'edit'
+                                                              else "Пользователь разблокирован"
+                                                              if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)])) is None
+                                                              else f"Ошибка при разблокировки пользователя {el[1]}. Ошибка {err}"))
+                   for el in get_all_username_vpn(0)
+               ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
+
+        Button('lock_vpn', 'Заблокировать пользователя VPN', 'Выберите пользователя для блокировки', can_back=True, is_custom_keys=True,
+               custom_keys_def=lambda key, *args: [
+                   Button(f"{key}_{el[0]}", el[0], is_work=True,
+                          work_def=lambda self_btn, *arg: Result(self_btn.get_prev_button(True),
+                                                              f"Ошибка при блокировке пользователя {el[1]}"
+                                                              if not enable_user_vpn(extract_text(self_btn.key, f'{self_btn.prev_button.key}_'), 0) == 'edit'
+                                                              else "Пользователь заблокирован"
+                                                              if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)])) is None
+                                                              else f"Ошибка при блокировке пользователя {el[1]}. Ошибка {err}"))
+                   for el in get_all_username_vpn(1)
+               ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
+
+        Button('del_all_ses', 'Удалить все сессии', is_work=True,
+               work_def=lambda self, _: Result(
+                   self.prev_button,
+                   'Все сессии удалены' if delete_session() else 'Ошибка удаления сессий'
+               )),
+
+        Button('show_all_ses', 'Посмотреть текущие сессии', can_back=True, parse_mode="HTML", is_work=True,
+               work_def=lambda self, chat_id, *arg: (
+                   Result(self.prev_button, "Список сессий пуст")
+                   if not len((data := get_all_processes()))
+                   else Result(self, get_table_str(['PID', 'Local IP', 'Name'], data))
+           )),
+
+        Button('show_all_tg_user', 'Посмотреть пользователей TG', can_back=True, parse_mode="HTML", is_work=True,
+               work_def=lambda self, chat_id, *arg: (
+                   Result(self.prev_button, "Список пользователей пуст")
+                   if not len((data := get_all_tg_username()))
+                   else Result(self, get_table_str(['USR_ID', 'NAME', 'ROLE', 'ENABLED'], data))
+           )),
+
+        Button('show_all_vpn_user', 'Посмотреть пользователей VPN', can_back=True, parse_mode="HTML", is_work=True,
+               work_def=lambda self, chat_id, *arg: (
+                   Result(self.prev_button, "Список пользователей пуст")
+                   if not len((data := get_all_username_vpn()))
+                   else Result(self, get_table_str(['USR', 'PASSWORD', 'STATUS'], data))
+           ))
+    ]),
+
+    Button('show_my_acc', 'Посмотреть свои аккаунты', can_back=True, parse_mode="HTML", is_work=True,
+           work_def=lambda self, chat_id, *arg: (
+               Result(self.prev_button, "Список пользователей пуст")
+               if not len((data := get_my_account(chat_id)))
+               else Result(self, get_table_str(['USR', 'PASSWORD'], data))
+           )),
+
+    Button('connect_acc', 'Привязать аккаунт', can_back=True, is_work=True,
+           work_def=lambda self, chat_id, *arg: Result(
+               self, 'Введите имя нового пользователя', make_recursive_lambda(lambda self_func, login, *args: (
+                   Result(self, "Введите пароль для пользователя", make_recursive_lambda(lambda self_func_pass, password, *args_2: (
+                       Result(self.prev_button, 'Аккаунт привязан к вам' if connect_tg_vpn(chat_id, login) == 'edit' else 'Ошибка привязки аккаунта')
+                       if len([el for el in get_all_username() if el[0] == login and el[1] == password]) > 0
+                       else Result(self, "Неверные данные входа, начните заново", self_func)
+                   )))
+                   if len([el for el in get_my_account(chat_id) if el[0] == login]) == 0
+                   else Result(self, "Данный аккаунт уже привязан к вам", self_func)
+               ))
+           )),
+
+    Button('unconnect_acc', 'Отвязать аккаунт', 'Выберете аккаунт для отвязки', can_back=True, is_custom_keys=True,
+           custom_keys_def=lambda key, chat_id, *args: [
+               Button(f"{key}_{el[0]}", el[0], is_work=True,
+                      work_def=lambda self_btn, *arg: Result(self_btn.prev_button.prev_button,
+                                                       f'Аккаунт отвязан'
+                                                       if unconnect_user(chat_id, extract_text(self_btn.key, f'{self_btn.prev_button.key}_')) == 'edit'
+                                                       else f'Ошибка отвязки аккаунта'))
+               for el in get_my_account(chat_id)
+           ], analize=lambda x, chat_id, *args: None if len(x.get_keys(chat_id)) > 1 else Result(x.prev_button, 'У вас нет аккаунтов')),
+
+    Button('del_my_ses', 'Удалить свои сессии', 'Выберете аккаунт для которого необходимо сбросить сессии', can_back=True, is_custom_keys=True,
+           custom_keys_def=lambda key, chat_id, *args: [
+               Button(f"{key}_{el[0]}", el[0], is_work=True,
+                      work_def=lambda self_btn, *arg: Result(self_btn.prev_button.prev_button,
+                                                       f'Все сессии {el[0]} удалены'
+                                                       if delete_session(extract_text(self_btn.key, f'{self_btn.prev_button.key}_'))
+                                                       else f'Ошибка удаления {el[0]} сессий'))
+               for el in get_my_account(chat_id)
+           ] + [
+               Button(f'{key}_all_session', 'Все', is_work=True,
+                      work_def=lambda self_btn, *arg: Result(self_btn.prev_button.prev_button,
+                                                       '\n'.join([
+                                                           f'Все сессии {el[0]} удалены'
+                                                           if delete_session(el[0])
+                                                           else f'Ошибка удаления {el[0]} сессий'
+                                                           for el in get_my_account(chat_id)
+                                                       ])))
+           ], analize=lambda x, chat_id, *args: None if len(x.get_keys(chat_id)) > 2 else Result(x.prev_button, 'У вас нет аккаунтов'))
+])
+
+
+
+

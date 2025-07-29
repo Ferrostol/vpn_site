@@ -1,8 +1,12 @@
-from telebot import TeleBot, types
-from logic import start_program, get_markup, check_tg_usr, check_button_call
-from database import get_role_user
 import os
+
 from dotenv import load_dotenv
+from telebot import TeleBot, types
+
+from logic import start_program, check_tg_usr, check_button_call
+from database import get_role_user
+from buttons import start_buttons
+
 load_dotenv()
 
 bot = TeleBot(os.getenv('TOKEN'))
@@ -16,10 +20,10 @@ def start_message(message: types.Message):
         return
     if not check_tg_usr(bot, message):
         return
-    
+
     bot.send_message(message.chat.id,
                      'Доступные команды',
-                     reply_markup=get_markup(role=get_role_user(message.chat.id)))
+                     reply_markup=start_buttons.get_markup(role=get_role_user(message.chat.id)))
 
 
 @bot.callback_query_handler(func=lambda call: True)
