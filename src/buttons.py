@@ -234,6 +234,18 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                    for el in get_all_username_vpn(1)
                ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
 
+        Button('delete_vpn', 'Удалить пользователя VPN', 'Выберите пользователя для удаления', can_back=True, is_custom_keys=True,
+               custom_keys_def=lambda key, *args: [
+                   Button(f"{key}_{el[0]}", el[0], is_work=True,
+                          work_def=lambda self_btn, chat_id, *arg: Result(self_btn.get_prev_button(True),
+                                                           f"Ошибка при удалении пользователя {el[0]}"
+                                                           if not delete_vpn_user(extract_text(self_btn.key, f'{self_btn.prev_button.key}_')) == 'edit'
+                                                           else "Пользователь удален"
+                                                           if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)])) is None
+                                                           else f"Пользователь удален. Ошибка при обновлении файла с доступами. Ошибка {err}"))
+                   for el in get_all_username_vpn()
+               ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
+
         Button('del_all_ses', 'Удалить все сессии', is_work=True,
                work_def=lambda self, _: Result(
                    self.prev_button,

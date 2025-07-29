@@ -42,6 +42,11 @@ def add_user(cursor, username, password, role):
     cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, password, role))
     return 'edit'
 
+@job_database
+def delete_vpn_user(cursor, username):
+    cursor.execute("delete from users where username = ?",
+                   (username, ))
+    return 'edit'
 
 # Получить роль пользователя
 @job_database
