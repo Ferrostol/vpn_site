@@ -3,13 +3,13 @@ import os
 from dotenv import load_dotenv
 from telebot import TeleBot, types
 
+
+import config
 from logic import start_program, check_tg_usr, check_button_call
 from database import get_role_user
 from buttons import start_buttons
 
-load_dotenv()
-
-bot = TeleBot(os.getenv('TOKEN'))
+bot = TeleBot(config.token)
 start_program()
 
 

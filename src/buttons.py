@@ -6,6 +6,7 @@ from prettytable import PrettyTable
 
 from database import *
 from server import *
+import config
 
 
 razdelitel = '__'
@@ -25,7 +26,8 @@ class Button:
             custom_keys_def = None,         # lambda функция по генерации списка кнопок, которые находятся после нажатия данной кнопки
             analize = None,                 # lambda функция условия для захода в кнопку
             is_work: bool = False,          # Нажатие кнопки выполняет действие
-            work_def = None                 # lambda функция действия при нажатии кнопки
+            work_def = None,                 # lambda функция действия при нажатии кнопки
+            visible: bool = True
     ):
         if text is None:
             text = caption
@@ -47,8 +49,9 @@ class Button:
         self.work_def = work_def
         self.prev_button: Button = None
         self.keys_search = key
+        self.visible = visible
 
-        if (can_back if can_back is not None else len(self.buttons) > 0) and not self.is_custom_keys:
+        if (can_back if can_back is not None else False) and not self.is_custom_keys:
             self.buttons.append(Button(f'{self.keys_search}{razdelitel}back', 'Назад', "Назад"))
 
         for btn in self.buttons:
@@ -83,7 +86,7 @@ class Button:
     def get_markup(self, role: str = 'user', chat_id = None):
         row = []
         for el in self.get_keys(chat_id):
-            if not el.check_secure_user(role):
+            if not el.check_secure_user(role) or not el.visible:
                 continue
             row.append(InlineKeyboardButton(el.caption, callback_data=el.keys_search))
         markup = InlineKeyboardMarkup(row_width=1)
@@ -158,7 +161,7 @@ def extract_text(s, matchs):
 
 
 start_buttons = Button('start', 'Начало', 'Выберите действие', can_back=False, buttons=[
-    Button('admin', 'Админ', 'Выберите действие', is_admin=True, buttons=[
+    Button('admin', 'Админ', 'Выберите действие', is_admin=True, can_back=True, buttons=[
         Button('unlock_tg', 'Дать доступ пользователю TG', 'Выберите пользователя для разблокировки', can_back=True, is_custom_keys=True,
                custom_keys_def=lambda key, *args: [
                    Button(f"{key}_{el[0]}", el[1], is_work=True,
@@ -272,6 +275,33 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                    if not len((data := get_all_username_vpn()))
                    else Result(self, get_table_str(['USR', 'PASSWORD', 'STATUS'], data))
            ))
+    ]),
+
+    Button('settings', 'Настройки', 'Выберите действие', is_admin=True, can_back=True, buttons= [
+        Button('multi_connect', '1 user = 1 session', 'Изменение', can_back=True, is_custom_keys=True, custom_keys_def= lambda *args : [
+            Button('enable', 'Выключить' if config.multi_connect else 'Включить', 'Подтвердите', can_back=True, buttons=[
+                Button(name, 'Подтвердаю', is_work=True, visible=visible,
+                       work_def=lambda self_btn, *args: (
+                           Result(
+                               self_btn.get_prev_button(True).get_prev_button(),
+                               'Настройка изменена'
+                               if (err := edit_multi_connect(not visible)) is None
+                               else err
+                           )
+                       ))
+                for name, visible in zip(['on', 'off'], [not config.multi_connect, config.multi_connect])
+            ])
+        ]),
+        Button('reboot_vpn', 'Перезагрузить VPN', 'Перезагрузить?', can_back=True, buttons=[
+            Button('confirm', '100% Да', is_work=True, work_def= lambda self_btn, *args: (
+                (reboot_vpn(), Result(self_btn.get_prev_button(True), 'Перезагружено'))[-1]
+            ))
+        ]),
+        Button('reboot_server', 'Перезагрузить сервер', can_back=True, buttons=[
+            Button('confirm', '100% Да', is_work=True, work_def= lambda self_btn, *args: (
+                (Result(self_btn.get_prev_button(True), 'Перезагружено'), reboot_server())[1]
+            ))
+        ])
     ]),
 
     Button('show_my_acc', 'Посмотреть свои аккаунты', can_back=True, parse_mode="HTML", is_work=True,

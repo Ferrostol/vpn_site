@@ -1,14 +1,12 @@
 import re
 import subprocess
 import os
+import shutil
 
-from dotenv import load_dotenv
+import config
+from config import set_key_env
 
-from config import log_file, output_file
 
-
-load_dotenv()
-multi_connect = True if os.getenv('MULTI_CONNECT') in ('Yy') else False
 ip_pattern = r'<addr\s+(\d+\.\d+\.\d+\.\d+)>'
 ip_ps_pattern = r'\d+\.\d+\.\d+\.\d+\:(\d+\.\d+\.\d+\.\d+)'
 
@@ -39,7 +37,7 @@ def get_all_processes():
 def get_last_name_for_ip(ip_address):
     try:
         # Читаем содержимое файла
-        with open(log_file, 'r') as file:
+        with open(config.log_file, 'r') as file:
             lines = file.readlines()
 
         # Ищем последнее вхождение подстроки
@@ -71,7 +69,7 @@ def delete_session(username=None):
         processes = [info for info in result if info[2] == username or username is None]
         for proc in processes:
             subprocess.run(f'/usr/bin/kill {proc[0]}', shell=True, capture_output=True, text=True)
-        if multi_connect:
+        if config.multi_connect:
             if username is None:
                 subprocess.run(f'/usr/bin/rm -f /var/locks/*.lock', shell=True, capture_output=True, text=True)
                 delete_file_logs()
@@ -85,18 +83,112 @@ def delete_session(username=None):
 
 
 def delete_file_logs():
-    if os.path.exists(log_file):
-        os.remove(log_file)
+    if os.path.exists(config.log_file):
+        os.remove(config.log_file)
+
+
+def reboot_vpn():
+    subprocess.run('/usr/bin/systemctl restart xl2tpd.service', shell=True, capture_output=True, text=True)
 
 
 def write_users_to_file(users):
     try:
         # Открываем файл для записи
-        with open(output_file, 'w') as file:
+        with open(config.output_file, 'w') as file:
             # Записываем данные пользователей в файл
             for username, password in users:
                 file.write(f'"{username}" l2tpd "{password}" *\n')
-        subprocess.run('/usr/bin/systemctl restart xl2tpd.service', shell=True, capture_output=True, text=True)
+        reboot_vpn()
         return None
     except Exception as e:
         return e
+
+
+def edit_multi_connect(enabled: bool):
+    config.load_env()
+    env = enabled == config.multi_connect
+
+    def found(file, target):
+        found = False
+        with open(file, "r", encoding="utf-8") as f:
+            found = any(target in line for line in f)
+        return found
+
+    def filtered_file(file):
+        start_marker = "#START_MULTI_CONNECT"
+        end_marker = "#END_MULTI_CONNECT"
+
+        with open(file, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        inside_block = False
+        filtered_lines = []
+
+        for line in lines:
+            if start_marker in line:
+                inside_block = True
+                continue  # пропустить строку с маркером начала
+            if end_marker in line:
+                inside_block = False
+                continue  # пропустить строку с маркером конца
+            if not inside_block:
+                filtered_lines.append(line)
+
+        with open(file, "w", encoding="utf-8") as f:
+            f.writelines(filtered_lines)
+
+    vpn_up_file: bool = found("/etc/ppp/ip-up", 'peer-lock.sh') == enabled
+    vpn_peer_file: bool = os.path.isfile('/etc/ppp/peer-lock.sh') == enabled
+    vpn_locks_path: bool = os.path.exists('/var/locks') == enabled
+    vpn_down_file: bool = found("/etc/ppp/ip-down", '/var/locks/') == enabled
+
+    count_need_edit = [vpn_up_file, vpn_peer_file, vpn_locks_path, vpn_down_file].count(False)
+    vpn_all: bool = count_need_edit == 0
+
+    if enabled:
+        if not env:
+            set_key_env(config.multi_connect_key, 'Y')
+        if not vpn_up_file:
+            with open('/etc/ppp/ip-up', 'a') as file:
+                file.write('''
+#START_MULTI_CONNECT
+if [ -x /etc/ppp/peer-lock.sh ]; then
+  /etc/ppp/peer-lock.sh
+  if [ $? -ne 0 ]; then
+    kill $PPPD_PID
+    exit 1
+  fi
+fi
+#END_MULTI_CONNECT''')
+        if not vpn_peer_file:
+            shutil.copy(
+                '../server/peer-lock.sh',
+                '/etc/ppp/peer-lock.sh'
+            )
+        if not vpn_locks_path:
+            os.mkdir("/var/locks")
+            os.chmod('/var/locks', 0o777)
+        if not vpn_down_file:
+            with open('/etc/ppp/ip-down', 'a') as file:
+                file.write("\n#START_MULTI_CONNECT\nrm -f /var/locks/$PEERNAME.lock\n#END_MULTI_CONNECT")
+    else:
+        if not env:
+            set_key_env(config.multi_connect_key, 'N')
+        if not vpn_up_file:
+            filtered_file('/etc/ppp/ip-up')
+        if not vpn_peer_file:
+            os.remove('/etc/ppp/peer-lock.sh')
+        if not vpn_locks_path:
+            shutil.rmtree('/var/locks')
+        if not vpn_down_file:
+            filtered_file('/etc/ppp/ip-down')
+
+    if count_need_edit > 0:
+        reboot_vpn()
+    if env and vpn_all:
+        return 'Уже включен' if enabled else 'Уже выключен'
+    elif not env and vpn_all:
+        return 'Уже включен, просто был не изменен конфиг' if enabled else 'Уже выключен, просто был не изменен конфиг'
+
+def reboot_server():
+    subprocess.run('/usr/sbin/reboot', shell=True, capture_output=True, text=True)
