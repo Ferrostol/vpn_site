@@ -298,14 +298,10 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
             ))
         ]),
         Button('reboot_server', 'Перезагрузить сервер', can_back=True, buttons=[
-            Button('confirm', '100% Да', is_work=True, work_def= lambda self_btn, *args: (
-                (Result(self_btn.get_prev_button(True), 'Перезагружено'), reboot_server())[1]
-            ))
+            Button('confirm', '100% Да', is_work=True, work_def= lambda self_btn, *args: reboot_server())
         ]),
         Button('update_bot', 'Обновить бота', can_back=True, buttons=[
-            Button('confirm', '100% Да', is_work=True, work_def= lambda self_btn, *args: (
-                (Result(self_btn.get_prev_button(True), 'Перезагружено'), update_bot())[1]
-            ))
+            Button('confirm', '100% Да', is_work=True, work_def= lambda self_btn, *args: update_bot())
         ])
     ]),
 
