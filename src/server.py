@@ -190,5 +190,11 @@ fi
     elif not env and vpn_all:
         return 'Уже включен, просто был не изменен конфиг' if enabled else 'Уже выключен, просто был не изменен конфиг'
 
+
 def reboot_server():
     subprocess.run('/usr/sbin/reboot', shell=True, capture_output=True, text=True)
+
+
+def update_bot():
+    subprocess.run('/usr/bin/git git fetch && /usr/bin/git pull', shell=True, capture_output=True, text=True)
+    subprocess.run('/usr/bin/systemctl restart vpn_bot.service', shell=True, capture_output=True, text=True)
