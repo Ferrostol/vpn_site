@@ -197,4 +197,7 @@ def reboot_server():
 
 def update_bot():
     subprocess.run('/usr/bin/git fetch && /usr/bin/git pull', shell=True, capture_output=True, text=True)
+    restart_bot()
+
+def restart_bot():
     subprocess.run('/usr/bin/systemctl restart vpn_bot.service', shell=True, capture_output=True, text=True)

@@ -326,9 +326,16 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                 Result(self_btn, 'Пришлите файл БД', make_recursive_lambda(lambda self_func, _, __, message, *args_1: (
                     Result(self_btn, 'Некорректный файл', self_func)
                     if not message.document
-                    else Result(self_btn.get_prev_button(True), (logic.get_file_and_save(bot, message, f"{config.database_file}_2"), 'Файл получен')[-1])
+                    else (logic.get_file_and_save(bot, message, f"{config.database_file}"), restart_bot())
                 ))))
             )
+        ]),
+        Button('update_file_users','Обновить пользователей VPN', can_back=True, buttons=[
+            Button('confirm', '100% Да', is_work=True, can_back=True, work_def= lambda self_btn, *args: (
+                Result(self_btn, "Файл с пользователям обновлен"
+                                  if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)])) is None
+                                  else f"Ошибка при обновлении файла с доступами. Ошибка {err}")
+            ))
         ])
     ]),
 
