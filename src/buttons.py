@@ -1,6 +1,3 @@
-# Что должна делать кнопка. Параметры которые можно заполнить в edit_message_text:
-# - text - текст сообщения(возможно таблицу)
-# - editable - редактируем или пишем новое сообщение
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 from prettytable import PrettyTable
 
@@ -164,31 +161,37 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
     Button('admin', 'Админ', 'Выберите действие', is_admin=True, can_back=True, buttons=[
         Button('unlock_tg', 'Дать доступ пользователю TG', 'Выберите пользователя для разблокировки', can_back=True, is_custom_keys=True,
                custom_keys_def=lambda key, *args: [
-                   Button(f"{key}_{el[0]}", el[1], is_work=True,
-                          work_def=lambda self_btn, *arg: Result(self_btn.get_prev_button(True),
-                                                           "Пользователь разблокирован"
-                                                           if enable_user_tg(extract_text(self_btn.key, f'{self_btn.prev_button.key}_'), 1) == 'edit'
-                                                           else f"Ошибка при разблокировке пользователя {el[1]}"))
+                   Button(el[0], el[1], is_work=True, work_def=(lambda el0=el[0], el1=el[1]: (
+                       lambda self_btn, *arg: (
+                           Result(self_btn.get_prev_button(True),
+                                  "Пользователь разблокирован"
+                                  if enable_user_tg(el0, 1) == 'edit'
+                                  else f"Ошибка при разблокировке пользователя {el1}")
+                       )))())
                    for el in get_all_tg_username(enabled=0)
                ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
 
         Button('delete_tg', 'Удалить пользователя TG', 'Выберите пользователя для удаления', can_back=True, is_custom_keys=True,
                custom_keys_def=lambda key, *args: [
-                   Button(f"{key}_{el[0]}", el[1], is_work=True,
-                          work_def=lambda self_btn, chat_id, *arg: Result(self_btn.get_prev_button(True),
-                                                           "Пользователь удален"
-                                                           if delete_tg_user(extract_text(self_btn.key, f'{self_btn.prev_button.key}_')) == 'edit'
-                                                           else f"Ошибка при удалении пользователя {el[1]}"))
+                   Button(el[0], el[1], is_work=True, work_def=(lambda el0=el[0], el1=el[1]: (
+                       lambda self_btn, chat_id, *arg: (
+                           Result(self_btn.get_prev_button(True),
+                                  "Пользователь удален"
+                                  if delete_tg_user(el0) == 'edit'
+                                  else f"Ошибка при удалении пользователя {el1}")
+                       )))())
                    for el in get_all_tg_username()
                ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
 
         Button('lock_tg', 'Заблокировать пользователя TG', 'Выберите пользователя для блокировки', can_back=True, is_custom_keys=True,
                custom_keys_def=lambda key, *args: [
-                   Button(f"{key}_{el[0]}", el[1], is_work=True,
-                          work_def=lambda self_btn, *arg: Result(self_btn.get_prev_button(True),
-                                                           "Пользователь заблокирован"
-                                                           if enable_user_tg(extract_text(self_btn.key, f'{self_btn.prev_button.key}_'), 0) == 'edit'
-                                                           else f"Ошибка при блокировке пользователя {el[1]}"))
+                   Button(el[0], el[1], is_work=True, work_def=(lambda el0=el[0], el1=el[1]: (
+                       lambda self_btn, *arg: (
+                           Result(self_btn.get_prev_button(True),
+                                  "Пользователь заблокирован"
+                                  if enable_user_tg(el0, 0) == 'edit'
+                                  else f"Ошибка при блокировке пользователя {el1}")
+                       )))())
                    for el in get_all_tg_username(enabled=1)
                ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
 
@@ -215,37 +218,43 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
 
         Button('unlock_vpn', 'Разблокировать пользователя VPN', 'Выберите пользователя для разблокировки', can_back=True, is_custom_keys=True,
                custom_keys_def=lambda key, *args: [
-                   Button(f"{key}_{el[0]}", el[0], is_work=True,
-                          work_def=lambda self_btn, *arg: Result(self_btn.get_prev_button(True),
-                                                              f"Ошибка при разблокировки пользователя {el[1]}"
-                                                              if not enable_user_vpn(extract_text(self_btn.key, f'{self_btn.prev_button.key}_'), 1) == 'edit'
-                                                              else "Пользователь разблокирован"
-                                                              if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)])) is None
-                                                              else f"Ошибка при разблокировки пользователя {el[1]}. Ошибка {err}"))
+                       Button(el[0], el[0], is_work=True, work_def=(lambda el0=el[0], el1=el[1]: (
+                       lambda self_btn, *arg: (
+                           Result(self_btn.get_prev_button(True),
+                                  f"Ошибка при разблокировки пользователя {el1}"
+                                  if not enable_user_vpn(el0, 1) == 'edit'
+                                  else "Пользователь разблокирован"
+                                  if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)])) is None
+                                  else f"Ошибка при разблокировки пользователя {el1}. Ошибка {err}")
+                       )))())
                    for el in get_all_username_vpn(0)
                ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
 
         Button('lock_vpn', 'Заблокировать пользователя VPN', 'Выберите пользователя для блокировки', can_back=True, is_custom_keys=True,
                custom_keys_def=lambda key, *args: [
-                   Button(f"{key}_{el[0]}", el[0], is_work=True,
-                          work_def=lambda self_btn, *arg: Result(self_btn.get_prev_button(True),
-                                                              f"Ошибка при блокировке пользователя {el[1]}"
-                                                              if not enable_user_vpn(extract_text(self_btn.key, f'{self_btn.prev_button.key}_'), 0) == 'edit'
-                                                              else "Пользователь заблокирован"
-                                                              if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)])) is None
-                                                              else f"Ошибка при блокировке пользователя {el[1]}. Ошибка {err}"))
+                   Button(el[0], el[0], is_work=True, work_def=(lambda el0=el[0], el1=el[1]: (
+                       lambda self_btn, *arg: (
+                           Result(self_btn.get_prev_button(True),
+                                  f"Ошибка при блокировке пользователя {el1}"
+                                  if not enable_user_vpn(el0, 0) == 'edit'
+                                  else "Пользователь заблокирован"
+                                  if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)])) is None
+                                  else f"Ошибка при блокировке пользователя {el1}. Ошибка {err}")
+                       )))())
                    for el in get_all_username_vpn(1)
                ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
 
         Button('delete_vpn', 'Удалить пользователя VPN', 'Выберите пользователя для удаления', can_back=True, is_custom_keys=True,
                custom_keys_def=lambda key, *args: [
-                   Button(f"{key}_{el[0]}", el[0], is_work=True,
-                          work_def=lambda self_btn, chat_id, *arg: Result(self_btn.get_prev_button(True),
-                                                           f"Ошибка при удалении пользователя {el[0]}"
-                                                           if not delete_vpn_user(extract_text(self_btn.key, f'{self_btn.prev_button.key}_')) == 'edit'
-                                                           else "Пользователь удален"
-                                                           if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)])) is None
-                                                           else f"Пользователь удален. Ошибка при обновлении файла с доступами. Ошибка {err}"))
+                   Button(el[0], el[0], is_work=True, work_def=(lambda el0=el[0]: (
+                       lambda self_btn, chat_id, *arg: (
+                           Result(self_btn.get_prev_button(True),
+                                  f"Ошибка при удалении пользователя {el0}"
+                                  if not delete_vpn_user(el0) == 'edit'
+                                  else "Пользователь удален"
+                                  if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)])) is None
+                                  else f"Пользователь удален. Ошибка при обновлении файла с доступами. Ошибка {err}")
+                       )))())
                    for el in get_all_username_vpn()
                ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
 
@@ -281,14 +290,15 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
         Button('multi_connect', '1 user = 1 session', 'Изменение', can_back=True, is_custom_keys=True, custom_keys_def= lambda *args : [
             Button('enable', 'Выключить' if config.multi_connect else 'Включить', 'Подтвердите', can_back=True, buttons=[
                 Button(name, 'Подтвердаю', is_work=True, visible=visible,
-                       work_def=lambda self_btn, *args: (
-                           Result(
-                               self_btn.get_prev_button(True).get_prev_button(),
-                               'Настройка изменена'
-                               if (err := edit_multi_connect(not visible)) is None
-                               else err
-                           )
-                       ))
+                       work_def=(lambda visible_=visible: (
+                           lambda self_btn, *args: (
+                               Result(
+                                   self_btn.get_prev_button(True).get_prev_button(),
+                                   'Настройка изменена'
+                                   if (err := edit_multi_connect(not visible_)) is None
+                                   else err
+                               )
+                           )))())
                 for name, visible in zip(['on', 'off'], [not config.multi_connect, config.multi_connect])
             ])
         ]),
