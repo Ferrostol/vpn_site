@@ -327,21 +327,25 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
 
     Button('unconnect_acc', 'Отвязать аккаунт', 'Выберете аккаунт для отвязки', can_back=True, is_custom_keys=True,
            custom_keys_def=lambda key, chat_id, *args: [
-               Button(f"{key}_{el[0]}", el[0], is_work=True,
-                      work_def=lambda self_btn, *arg: Result(self_btn.prev_button.prev_button,
-                                                       f'Аккаунт отвязан'
-                                                       if unconnect_user(chat_id, extract_text(self_btn.key, f'{self_btn.prev_button.key}_')) == 'edit'
-                                                       else f'Ошибка отвязки аккаунта'))
+               Button(el[0], el[0], is_work=True,
+                      work_def=(lambda el0=el[0]: (
+                          lambda self_btn, *arg: Result(self_btn.prev_button.prev_button,
+                                                        f'Аккаунт отвязан'
+                                                        if unconnect_user(chat_id, el0) == 'edit'
+                                                        else f'Ошибка отвязки аккаунта')
+                      ))())
                for el in get_my_account(chat_id)
            ], analize=lambda x, chat_id, *args: None if len(x.get_keys(chat_id)) > 1 else Result(x.prev_button, 'У вас нет аккаунтов')),
 
     Button('del_my_ses', 'Удалить свои сессии', 'Выберете аккаунт для которого необходимо сбросить сессии', can_back=True, is_custom_keys=True,
            custom_keys_def=lambda key, chat_id, *args: [
-               Button(f"{key}_{el[0]}", el[0], is_work=True,
-                      work_def=lambda self_btn, *arg: Result(self_btn.prev_button.prev_button,
-                                                       f'Все сессии {el[0]} удалены'
-                                                       if delete_session(extract_text(self_btn.key, f'{self_btn.prev_button.key}_'))
-                                                       else f'Ошибка удаления {el[0]} сессий'))
+               Button(el[0], el[0], is_work=True,
+                      work_def=(lambda el0=el[0]: (
+                          lambda self_btn, *arg: Result(self_btn.prev_button.prev_button,
+                                                        'Все сессии {el0} удалены'
+                                                        if delete_session(el0)
+                                                        else f'Ошибка удаления {el0} сессий')
+                      ))())
                for el in get_my_account(chat_id)
            ] + [
                Button(f'{key}_all_session', 'Все', is_work=True,
