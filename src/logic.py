@@ -66,7 +66,7 @@ def check_button_call(bot: TeleBot, call, role: str):
         text = result.text
         next = result.next_step
     elif btn.is_work:
-        result: Result = btn.work_def(btn, chat_id, role)
+        result: Result = btn.work_def(btn, chat_id, role, bot)
         btn: Button = result.btn
         text = result.text
         next = result.next_step
@@ -90,3 +90,8 @@ def check_button_call(bot: TeleBot, call, role: str):
             print(e)
     except Exception as e:
         print(e)
+
+
+def send_file(bot: TeleBot, chat_id, file_path):
+    with open(file_path, 'rb') as f:
+        bot.send_document(chat_id, f)

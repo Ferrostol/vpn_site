@@ -4,6 +4,7 @@ from prettytable import PrettyTable
 from database import *
 from server import *
 import config
+import logic
 
 
 razdelitel = '__'
@@ -312,6 +313,13 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
         ]),
         Button('update_bot', 'Обновить бота', can_back=True, buttons=[
             Button('confirm', '100% Да', is_work=True, work_def= lambda self_btn, *args: update_bot())
+        ]),
+        Button('export_db', 'Экспорт БД', can_back=True, buttons=[
+            Button('confirm', '100% Да', is_work=True,
+                   work_def= lambda self_btn, chat_id, role, bot, *args: (
+                       Result(self_btn.get_prev_button(True),
+                              (logic.send_file(bot, chat_id, config.database_file), 'Файл экспортирован')[-1])
+                   ))
         ])
     ]),
 
