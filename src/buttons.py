@@ -250,7 +250,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
 
         Button('del_all_ses', 'Удалить все сессии', is_work=True,
-               work_def=lambda self, _: Result(
+               work_def=lambda self, *arg: Result(
                    self.prev_button,
                    'Все сессии удалены' if delete_session() else 'Ошибка удаления сессий'
                )),
