@@ -320,6 +320,15 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                        Result(self_btn.get_prev_button(True),
                               (logic.send_file(bot, chat_id, config.database_file), 'Файл экспортирован')[-1])
                    ))
+        ]),
+        Button('import_bd','Импорт БД', can_back=True, buttons=[
+            Button('confirm', '100% Да', is_work=True, can_back=True, work_def= lambda self_btn, chat_id, role, bot, *args: (
+                Result(self_btn, 'Пришлите файл БД', make_recursive_lambda(lambda self_func, _, __, message, *args_1: (
+                    Result(self_btn, 'Некорректный файл', self_func)
+                    if not message.document
+                    else Result(self_btn.get_prev_button(True), (logic.get_file_and_save(bot, message, f"{config.database_file}_2"), 'Файл получен')[-1])
+                ))))
+            )
         ])
     ]),
 

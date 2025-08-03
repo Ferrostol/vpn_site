@@ -45,7 +45,7 @@ def next_step(message: types.Message, bot: TeleBot, type_in: str, next=None, *ar
     if not check_tg_usr(bot, message):
         return
     role = database.get_role_user(message.chat.id)
-    result = next(message.text, role, *args)
+    result = next(message.text, role, message, *args)
     msg = bot.send_message(
         message.chat.id,
         result.text,
@@ -95,3 +95,10 @@ def check_button_call(bot: TeleBot, call, role: str):
 def send_file(bot: TeleBot, chat_id, file_path):
     with open(file_path, 'rb') as f:
         bot.send_document(chat_id, f)
+
+def get_file_and_save(bot: TeleBot, message, file_path):
+    file_info = bot.get_file(message.document.file_id)
+    downloaded_file = bot.download_file(file_info.file_path)
+
+    with open(file_path, 'wb') as f:
+        f.write(downloaded_file)
