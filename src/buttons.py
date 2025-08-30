@@ -270,7 +270,10 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                    Result(self.prev_button, "Список сессий пуст")
                    if not len((data := get_all_processes()))
                    else Result(self, get_table_str(['PID', 'Local IP', 'Name'], data))
-           )),
+           ), buttons=[
+                Button('reload', 'Обновить', can_back=True, parse_mode="HTML", is_work=True,
+                       work_def=lambda self, *arg: self.prev_button.work_def(self.prev_button, *arg))
+            ]),
 
         Button('show_all_tg_user', 'Посмотреть пользователей TG', can_back=True, parse_mode="HTML", is_work=True,
                work_def=lambda self, chat_id, *arg: (
@@ -376,7 +379,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                Button(el[0], el[0], is_work=True,
                       work_def=(lambda el0=el[0]: (
                           lambda self_btn, *arg: Result(self_btn.prev_button.prev_button,
-                                                        'Все сессии {el0} удалены'
+                                                        f'Все сессии {el0} удалены'
                                                         if delete_session(el0)
                                                         else f'Ошибка удаления {el0} сессий')
                       ))())
