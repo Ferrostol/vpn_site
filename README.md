@@ -1,5 +1,15 @@
 Установка на сервере Debian
 
+# Автоматическая установка #
+
+Выполнить команды
+
+    curl https://raw.githubusercontent.com/Ferrostol/vpn_site/refs/heads/tg_bot_editable/install.sh >> install.sh
+    chmod +x install.sh
+    ./install.sh
+
+# Ручная установка #
+
 Устанавливаем программы:
 
 	apt install git wget
@@ -14,7 +24,6 @@
 	VPN_SKIP_IKEV2=yes \
 	sh vpn.sh
 
-
 Настраиваем VPN для работы с ботом:
 
 	vim /etc/ppp/options.xl2tpd
@@ -24,8 +33,6 @@
 	logfile /etc/ppp/log.log
 	debug
 	idle 0
-
-
 
 Устанавливаем Python:
  

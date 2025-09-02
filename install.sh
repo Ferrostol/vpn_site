@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+CURRENT_DIR="$(pwd)"
+
 ### === Парсим аргументы в формате VAR=VALUE === ###
 for ARG in "$@"; do
   case $ARG in
@@ -85,7 +87,7 @@ make altinstall
 export PATH=/root/.python/bin:$PATH
 
 ### === Установка бота === ###
-cd ~
+cd "$CURRENT_DIR"
 git clone https://github.com/Ferrostol/vpn_site.git
 cd vpn_site
 git switch tg_bot_editable
@@ -126,6 +128,7 @@ systemctl restart xl2tpd.service
 
 ### === Запуск бота === ###
 cp server/vpn_bot.service /etc/systemd/system
+sed -i "s|/root/|$CURRENT_DIR/|g" /etc/systemd/system/vpn_bot.service
 systemctl daemon-reload
 echo "TOKEN=$BOT_TOKEN" > src/.env
 echo "MULTI_CONNECT=$MULTI_CONNECT" >> src/.env
