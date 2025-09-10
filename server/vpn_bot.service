@@ -8,6 +8,7 @@ Group=root
 WorkingDirectory=/root/vpn_site/src
 Environment="PATH=/root/vpn_site/venv/bin"
 ExecStart=/root/vpn_site/venv/bin/python3 -u /root/vpn_site/src/app.py
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
