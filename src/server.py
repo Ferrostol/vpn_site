@@ -98,7 +98,6 @@ def write_users_to_file(users):
             # Записываем данные пользователей в файл
             for username, password in users:
                 file.write(f'"{username}" l2tpd "{password}" *\n')
-        reboot_vpn()
         return None
     except Exception as e:
         return e
