@@ -6,6 +6,7 @@ from dotenv import load_dotenv, set_key
 database_file = 'users.db'
 log_file = '/etc/ppp/log.log'
 output_file = '/etc/ppp/chap-secrets'
+ipsec_file = '/etc/ipsec.secrets'
 
 multi_connect = None
 multi_connect_key = 'MULTI_CONNECT'
