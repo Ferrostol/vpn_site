@@ -98,7 +98,7 @@ install_bot() {
   git switch tg_bot_editable
   /root/.python/bin/python3.12 -m venv venv
   . ./venv/bin/activate
-  pip install -r requirements.txt
+  pip install -r ./src/main_bot/requirements.txt
 
   ### === Настройка ограничения 1 пользователь = 1 сессия === ###
   if [[ "$MULTI_CONNECT" =~ ^[Yy]$ ]]; then
@@ -124,7 +124,7 @@ EOF
     fi
   fi
 
-  cp server/vpn_bot.service /etc/systemd/system
+  cp ./src/main_bot/vpn_bot.service /etc/systemd/system
   sed -i "s|/root/|$CURRENT_DIR/|g" /etc/systemd/system/vpn_bot.service
   echo "TOKEN=$BOT_TOKEN" > src/.env
   echo "MULTI_CONNECT=$MULTI_CONNECT" >> src/.env
