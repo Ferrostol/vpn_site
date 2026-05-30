@@ -161,7 +161,7 @@ fi
 #END_MULTI_CONNECT''')
         if not vpn_peer_file:
             shutil.copy(
-                '../../server/peer-lock.sh',
+                '../../src/config/vpn_server/peer-lock.sh',
                 '/etc/ppp/peer-lock.sh'
             )
         if not vpn_locks_path:

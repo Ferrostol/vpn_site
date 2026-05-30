@@ -144,10 +144,10 @@ configure_vars() {
       prompt_until_nonempty VPN_L2TP_LOCAL "Укажите gateway (VPN_L2TP_LOCAL)" "192.168.42.1"
       prompt_until_nonempty VPN_L2TP_POOL "Укажите пул адресов (VPN_L2TP_POOL)" "192.168.42.10-192.168.42.250"
     fi
+    prompt_until_nonempty_yn MULTI_CONNECT "Разрешить одновременные подключения" "Y"
   fi
   if [[ "${INSTALL_BOT}" -eq 1 ]]; then
     prompt_until_nonempty BOT_TOKEN "Введите Telegram bot token (BOT_TOKEN)" "NONE"
-    prompt_until_nonempty_yn MULTI_CONNECT "Разрешить одновременные подключения" "Y"
   fi
 }
 
@@ -183,9 +183,10 @@ install_vpn() {
 setup_vpn() {
   if [[ "${INSTALL_VPN}" -eq 1 && "${SETUP_VPN}" -eq 1 ]]; then
     cd "$CURRENT_DIR"/vpn_site/src/config
-    cat options.xl2tpd >> /etc/ppp/options.xl2tpd
+    cat vpn_server/options.xl2tpd >> /etc/ppp/options.xl2tpd
 
     if [[ "${MIDDLE_VPN}" -eq 1 ]]; then
+      cd vpn_client
       cat ipsec.conf >> /etc/ipsec.conf
       sed -i "s|VPN_IP|$VPN_IP|g" /etc/ipsec.conf
       cat options.l2tpd.client >> /etc/ppp/options.l2tpd.client
@@ -195,6 +196,19 @@ setup_vpn() {
       sed -i "s|VPN_IP|$VPN_IP|g" /etc/xl2tpd/xl2tpd.conf
       cat connect_client.service > /etc/systemd/system/connect_client.service
     fi
+
+    if [[ "$MULTI_CONNECT" =~ ^[Nn]$ ]]; then
+      if [ -f src/config/vpn_server/peer-lock.sh ]; then
+        cp src/config/vpn_server/peer-lock.sh /etc/ppp
+        mkdir -p /var/locks
+        chmod 777 /var/locks
+
+        if ! grep -q "peer-lock.sh" /etc/ppp/ip-up; then
+          cat src/config/vpn_server/ip-up >> /etc/ppp/ip-up
+        fi
+        echo 'rm -f /var/locks/$PEERNAME.lock' >> /etc/ppp/ip-down
+      fi
+    fi
   fi
 }
 
@@ -202,7 +216,7 @@ install_sing_box() {
   if [[ "${INSTALL_SING_BOX}" -eq 1 ]]; then
     cd "$CURRENT_DIR"
     bash <(curl -fsSL https://sing-box.app/install.sh)
-    cd vpn_site/src/config
+    cd vpn_site/src/config/sing-box
     cat sing_init.service > /etc/systemd/system/sing_init.service
     sed -i "s|/root/|$CURRENT_DIR/|g" /etc/systemd/system/sing_init.service
     chmod +x sing_init.sh
@@ -243,24 +257,14 @@ install_bot() {
     . ./venv/bin/activate
     pip install -r ./src/main_bot/requirements.txt
 
-    ### === Настройка ограничения 1 пользователь = 1 сессия === ###
-    if [[ "$MULTI_CONNECT" =~ ^[Nn]$ ]]; then
-      if [ -f src/config/peer-lock.sh ]; then
-        cp src/config/peer-lock.sh /etc/ppp
-        mkdir -p /var/locks
-        chmod 777 /var/locks
-
-        if ! grep -q "peer-lock.sh" /etc/ppp/ip-up; then
-          cat src/config/ip-up >> /etc/ppp/ip-up
-        fi
-        echo 'rm -f /var/locks/$PEERNAME.lock' >> /etc/ppp/ip-down
-      fi
-    fi
-
     cp ./src/config/vpn_bot.service /etc/systemd/system
     sed -i "s|/root/|$CURRENT_DIR/|g" /etc/systemd/system/vpn_bot.service
     echo "TOKEN=$BOT_TOKEN" > src/.env
-    echo "MULTI_CONNECT=$MULTI_CONNECT" >> src/.env
+    if grep -q "peer-lock.sh" /etc/ppp/ip-up; then
+      echo "MULTI_CONNECT=N" >> src/.env
+    else
+      echo "MULTI_CONNECT=Y" >> src/.env
+    fi
   fi
 }
 
