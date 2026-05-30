@@ -201,15 +201,6 @@ def update_bot():
 def restart_bot():
     subprocess.run('/usr/bin/systemctl restart vpn_bot.service', shell=True, capture_output=True, text=True)
 
-
-
-def get_my_ip():
-    import socket
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        sock.connect(('8.8.8.8', 80))
-        return sock.getsockname()[0]
-    return None
-
 def get_ipsec_key():
     with open(config.ipsec_file, 'r') as file:
         text = file.read()

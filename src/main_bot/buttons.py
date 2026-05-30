@@ -204,7 +204,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                        else Result(self, "Введите пароль для пользователя", make_recursive_lambda(lambda self_func_pass, password, password_role, *args_2: (
                            Result(Button.get_buttons(start_buttons, password_role, self.keys_search), 'Ошибка создания пользователя')
                            if not self.check_secure_user(password_role)
-                           else Result(self.prev_button, f'Пользователь создан\nЛогин:{login}\nПароль:{password}\nХост:{get_my_ip()}\nОбщий ключ:{get_ipsec_key()}')
+                           else Result(self.prev_button, f'Пользователь создан\nЛогин:{login}\nПароль:{password}\nОбщий ключ:{get_ipsec_key()}')
                            if (
                                add_user(login, password, 'user'),
                                write_users_to_file([(el[0], el[1]) for el in get_all_username_vpn(enabled=1)]),
@@ -291,7 +291,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
     ]),
 
     Button('settings', 'Настройки', 'Выберите действие', is_admin=True, can_back=True, buttons= [
-        Button('multi_connect', '1 user = 1 session', 'Изменение', can_back=True, is_custom_keys=True, custom_keys_def= lambda *args : [
+        Button('multi_connect', '1 user != 1 session', 'Изменение', can_back=True, is_custom_keys=True, custom_keys_def= lambda *args : [
             Button('enable', 'Выключить' if config.multi_connect else 'Включить', 'Подтвердите', can_back=True, buttons=[
                 Button(name, 'Подтвердаю', is_work=True, visible=visible,
                        work_def=(lambda visible_=visible: (
