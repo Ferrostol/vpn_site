@@ -1,0 +1,11 @@
+[Unit]
+Description=SING routing
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/root/vpn_site/src/config/sing_init.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

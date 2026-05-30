@@ -1,0 +1,7 @@
+[Unit]
+Description=Check mnl and switch sing-box config
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/root/vpn_site/others/select_config.sh

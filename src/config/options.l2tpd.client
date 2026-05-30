@@ -1,0 +1,20 @@
+ipcp-accept-local
+ipcp-accept-remote
+refuse-eap
+require-chap
+noccp
+noauth
+mtu 1400
+mru 1400
+noipdefault
+defaultroute
+usepeerdns
+connect-delay 5000
+persist
+maxfail 0
+holdoff 5
+name VPN_USER
+password VPN_PASSWORD
+lcp-echo-interval 10
+lcp-echo-failure 3
+ifname vpn

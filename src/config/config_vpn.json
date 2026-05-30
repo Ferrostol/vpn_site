@@ -1,0 +1,83 @@
+{
+  "dns": {
+    "servers": [
+      { "tag": "dns-direct", "type": "udp", "server": "1.1.1.1" },
+      { "tag": "dns-proxy", "type": "udp", "server": "8.8.8.8" }
+    ],
+    "rules": [
+      { "rule_set": [ "geosite-ru" ], "server": "dns-direct" },
+      { "rule_set": [ "geosite-proxy" ], "server": "dns-proxy" }
+    ]
+  },
+  "inbounds": [
+    {
+      "type": "tproxy",
+      "tag": "l2tp-in",
+      "listen": "127.0.0.1",
+      "listen_port": 12345
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "direct",
+      "tag": "proxy-out",
+      "bind_interface": "vpn",
+      "domain_resolver": "dns-direct"
+    }
+  ],
+  "route": {
+    "default_domain_resolver": "dns-direct",
+
+    "rule_set": [
+      {
+        "tag": "geoip-ru",
+        "type": "remote",
+        "format": "binary",
+
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/refs/heads/release/sing-box/rule-set-geoip/geoip-ru.srs"
+      },
+      {
+        "tag": "geosite-ru",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/refs/heads/release/sing-box/rule-set-geosite/geosite-ru-available-only-inside.srs"
+      },
+      {
+        "tag": "geosite-proxy",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/refs/heads/release/sing-box/rule-set-geosite/geosite-ru-blocked-all.srs"
+      }
+    ],
+    "rules": [
+      {
+        "inbound": "l2tp-in",
+        "action": "sniff",
+        "timeout": "1s"
+      },
+      {
+        "inbound": "l2tp-in",
+        "action": "resolve",
+        "strategy": "prefer_ipv4"
+      },
+      {
+        "network": "udp",
+        "port": 443,
+        "outbound": "reject"
+      },
+      { "ip_is_private": true, "outbound": "direct" },
+      { "rule_set": [ "geosite-ru", "geoip-ru" ], "outbound": "direct" },
+      { "rule_set": [ "geosite-proxy" ], "outbound": "proxy-out" }
+    ],
+    "final": "proxy-out"
+  },
+  "experimental": {
+    "cache_file": {
+      "enabled": true
+    }
+  }
+}
