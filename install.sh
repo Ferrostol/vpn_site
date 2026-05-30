@@ -148,6 +148,7 @@ configure_vars() {
   fi
   if [[ "${INSTALL_BOT}" -eq 1 ]]; then
     prompt_until_nonempty BOT_TOKEN "Введите Telegram bot token (BOT_TOKEN)" "NONE"
+    prompt_until_nonempty USE_VPN "Использовать vpn для бота" "Y"
   fi
 }
 
@@ -260,6 +261,7 @@ install_bot() {
     cp ./src/config/vpn_bot.service /etc/systemd/system
     sed -i "s|/root/|$CURRENT_DIR/|g" /etc/systemd/system/vpn_bot.service
     echo "TOKEN=$BOT_TOKEN" > src/.env
+    echo "USE_VPN=$USE_VPN" > src/.env
     if grep -q "peer-lock.sh" /etc/ppp/ip-up; then
       echo "MULTI_CONNECT=N" >> src/.env
     else

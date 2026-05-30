@@ -1,10 +1,28 @@
 from telebot import TeleBot, types
+import telebot.apihelper
 
+import socket
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.poolmanager import PoolManager
 
 import config
 from logic import start_program, check_tg_usr, check_button_call
 from database import get_role_user
 from buttons import start_buttons
+
+if config.vpn_request:
+    class Tun0Adapter(HTTPAdapter):
+        def init_poolmanager(self, *args, **kwargs):
+            kwargs["socket_options"] = [
+                (socket.SOL_SOCKET, socket.SO_BINDTODEVICE, b"vpn")
+            ]
+            self.poolmanager = PoolManager(*args, **kwargs)
+
+    session = requests.Session()
+    session.mount("https://", Tun0Adapter())
+    session.mount("http://", Tun0Adapter())
+    telebot.apihelper.session = session
 
 bot = TeleBot(config.token)
 start_program()
