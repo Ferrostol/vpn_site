@@ -18,7 +18,7 @@ def get_all_processes():
         # Поиск строк, содержащих xl2tpd и IP-адрес
         processes = []
         for line in result.stdout.split('\n'):
-            if 'pppd plugin' in line:
+            if 'pppol2tp_tunnel_id' in line:
                 ip_ps = re.search(ip_ps_pattern, line).group(1)
                 processes.append(
                     (
