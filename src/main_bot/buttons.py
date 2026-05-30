@@ -329,7 +329,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                 Result(self_btn, 'Пришлите файл БД', make_recursive_lambda(lambda self_func, _, __, message, *args_1: (
                     Result(self_btn, 'Некорректный файл', self_func)
                     if not message.document
-                    else (logic.get_file_and_save(bot, message, f"{config.database_file}"), restart_bot())
+                    else (logic.get_file_and_save(bot, message, f"{config.database_file}"), write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)]), restart_bot())
                 ))))
             )
         ]),
