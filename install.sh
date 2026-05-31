@@ -155,7 +155,7 @@ configure_vars() {
 install_pkg() {
   if [[ "${SETUP_PKG}" -eq 1 ]]; then
     apt update
-    apt install -y git wget
+    apt install -y git wget tdb-tools
     if [[ "${INSTALL_PYTHON}" -eq 1 ]]; then
       apt-get install -y \
         zlib1g-dev libbz2-dev libreadline-dev llvm libncurses5-dev libncursesw5-dev \

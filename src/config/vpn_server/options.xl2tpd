@@ -1,3 +1,2 @@
-logfile /etc/ppp/log.log
 debug
 idle 0
