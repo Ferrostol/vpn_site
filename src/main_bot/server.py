@@ -36,7 +36,7 @@ def delete_session(username=None):
         processes = [info for info in result if info[2] == username or username is None]
         for proc in processes:
             subprocess.run(f'/usr/bin/kill {proc[0]}', shell=True, capture_output=True, text=True)
-        if config.multi_connect:
+        if not config.multi_connect:
             if username is None:
                 subprocess.run(f'/usr/bin/rm -f /var/locks/*.lock', shell=True, capture_output=True, text=True)
             else:
@@ -100,45 +100,36 @@ def edit_multi_connect(enabled: bool):
     vpn_locks_path: bool = os.path.exists('/var/locks') == enabled
     vpn_down_file: bool = found("/etc/ppp/ip-down", '/var/locks/') == enabled
 
-    count_need_edit = [vpn_up_file, vpn_peer_file, vpn_locks_path, vpn_down_file].count(False)
+    count_need_edit = [vpn_up_file, vpn_peer_file, vpn_locks_path, vpn_down_file].count(True)
     vpn_all: bool = count_need_edit == 0
 
-    if enabled:
-        if not env:
-            set_key_env(config.multi_connect_key, 'Y')
-        if not vpn_up_file:
-            with open('/etc/ppp/ip-up', 'a') as file:
-                file.write('''
-#START_MULTI_CONNECT
-if [ -x /etc/ppp/peer-lock.sh ]; then
-  /etc/ppp/peer-lock.sh
-  if [ $? -ne 0 ]; then
-    kill $PPPD_PID
-    exit 1
-  fi
-fi
-#END_MULTI_CONNECT''')
-        if not vpn_peer_file:
-            shutil.copy(
-                '../../src/config/vpn_server/peer-lock.sh',
-                '/etc/ppp/peer-lock.sh'
-            )
-        if not vpn_locks_path:
-            os.mkdir("/var/locks")
-            os.chmod('/var/locks', 0o777)
-        if not vpn_down_file:
-            with open('/etc/ppp/ip-down', 'a') as file:
-                file.write("\n#START_MULTI_CONNECT\nrm -f /var/locks/$PEERNAME.lock\n#END_MULTI_CONNECT")
-    else:
+    if not enabled:
         if not env:
             set_key_env(config.multi_connect_key, 'N')
-        if not vpn_up_file:
+        if vpn_up_file:
+            with open("/etc/ppp/ip-up", "ab") as out, open("../config/vpn_server/ip-up", "rb") as inp:
+                shutil.copyfileobj(inp, out)
+        if vpn_peer_file:
+            shutil.copy(
+                '../config/vpn_server/peer-lock.sh',
+                '/etc/ppp/peer-lock.sh'
+            )
+        if vpn_locks_path:
+            os.mkdir("/var/locks")
+            os.chmod('/var/locks', 0o777)
+        if vpn_down_file:
+            with open("/etc/ppp/ip-down", "ab") as out, open("../config/vpn_server/ip-down", "rb") as inp:
+                shutil.copyfileobj(inp, out)
+    else:
+        if not env:
+            set_key_env(config.multi_connect_key, 'Y')
+        if vpn_up_file:
             filtered_file('/etc/ppp/ip-up')
-        if not vpn_peer_file:
+        if vpn_peer_file:
             os.remove('/etc/ppp/peer-lock.sh')
-        if not vpn_locks_path:
+        if vpn_locks_path:
             shutil.rmtree('/var/locks')
-        if not vpn_down_file:
+        if vpn_down_file:
             filtered_file('/etc/ppp/ip-down')
 
     if count_need_edit > 0:

@@ -294,12 +294,12 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
         Button('multi_connect', '1 user != 1 session', 'Изменение', can_back=True, is_custom_keys=True, custom_keys_def= lambda *args : [
             Button('enable', 'Выключить' if config.multi_connect else 'Включить', 'Подтвердите', can_back=True, buttons=[
                 Button(name, 'Подтвердаю', is_work=True, visible=visible,
-                       work_def=(lambda visible_=visible: (
+                       work_def=(lambda enabled_=config.multi_connect: (
                            lambda self_btn, *args: (
                                Result(
                                    self_btn.get_prev_button(True).get_prev_button(),
                                    'Настройка изменена'
-                                   if (err := edit_multi_connect(not visible_)) is None
+                                   if (err := edit_multi_connect(not enabled_)) is None
                                    else err
                                )
                            )))())

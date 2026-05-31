@@ -207,7 +207,7 @@ setup_vpn() {
         if ! grep -q "peer-lock.sh" /etc/ppp/ip-up; then
           cat src/config/vpn_server/ip-up >> /etc/ppp/ip-up
         fi
-        echo 'rm -f /var/locks/$PEERNAME.lock' >> /etc/ppp/ip-down
+        cat src/config/vpn_server/ip-down >> /etc/ppp/ip-down
       fi
     fi
   fi

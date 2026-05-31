@@ -1,0 +1,3 @@
+#START_MULTI_CONNECT
+rm -f /var/locks/$PEERNAME.lock
+#END_MULTI_CONNECT
