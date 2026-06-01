@@ -144,7 +144,11 @@ configure_vars() {
       prompt_until_nonempty VPN_L2TP_LOCAL "Укажите gateway (VPN_L2TP_LOCAL)" "192.168.42.1"
       prompt_until_nonempty VPN_L2TP_POOL "Укажите пул адресов (VPN_L2TP_POOL)" "192.168.42.10-192.168.42.250"
     fi
+
     prompt_until_nonempty_yn MULTI_CONNECT "Разрешить одновременные подключения" "Y"
+    if [[ "${EXISTS_DOMAIN}" -eq 1 ]]; then
+      prompt_until_nonempty DOMAIN "Введите домен для текущего сервера" ""
+    fi
   fi
   if [[ "${INSTALL_BOT}" -eq 1 ]]; then
     prompt_until_nonempty BOT_TOKEN "Введите Telegram bot token (BOT_TOKEN)" "NONE"
@@ -177,6 +181,7 @@ install_vpn() {
     VPN_L2TP_NET="$VPN_L2TP_NET" \
     VPN_L2TP_LOCAL="$VPN_L2TP_LOCAL" \
     VPN_L2TP_POOL="$VPN_L2TP_POOL" \
+    VPN_DNS_NAME="$DOMAIN" \
     sh vpn.sh
   fi
 }
@@ -302,6 +307,7 @@ setup() {
   export INSTALL_SING_BOX="${TASK_ENABLED[7]}"
   export INSTALL_PYTHON="${TASK_ENABLED[8]}"
   export INSTALL_BOT="${TASK_ENABLED[9]}"
+  export EXISTS_DOMAIN="${TASK_ENABLED[10]}"
   update_kernel
   install_zsh
   configure_vars
@@ -328,15 +334,16 @@ TASK_LABELS=(
   "Установка sing-box"
   "Установка python"
   "Установка бота"
+  "Наличие домена для текущего сервера"
 )
 
 # Состояние пунктов (0 = OFF, 1 = ON)
-TASK_ENABLED=(0 0 1 1 1 1 1 1 1 1)
+TASK_ENABLED=(0 0 1 1 1 1 1 1 1 1 1)
 
 if [[ "$(uname -r)" == *cloud* ]]; then
-    TASK_ENABLED=(1 0 0 0 0 0 0 0 0 0)
+    TASK_ENABLED=(1 0 0 0 0 0 0 0 0 0 0)
 elif [[ ! "$SHELL" == *zsh* ]]; then
-    TASK_ENABLED=(0 1 0 0 0 0 0 0 0 0)
+    TASK_ENABLED=(0 1 0 0 0 0 0 0 0 0 0)
 fi
 
 
