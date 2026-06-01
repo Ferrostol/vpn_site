@@ -225,8 +225,11 @@ install_sing_box() {
     cd vpn_site/src/config/sing-box
     cat sing_init.service > /etc/systemd/system/sing_init.service
     sed -i "s|/root/|$CURRENT_DIR/|g" /etc/systemd/system/sing_init.service
-    chmod +x sing_init.sh
     mkdir -p "$CURRENT_DIR"/vpn_site/others/
+    cp sing_init.sh "$CURRENT_DIR"/vpn_site/others/
+    chmod +x "$CURRENT_DIR"/vpn_site/others/sing_init.sh
+    sed -i "s|VPN_L2TP_NET|${VPN_L2TP_NET%%/*}|g" "$CURRENT_DIR"/vpn_site/others/sing_init.sh
+
     cp select_config.sh "$CURRENT_DIR"/vpn_site/others/
     chmod +x "$CURRENT_DIR"/vpn_site/others/select_config.sh
     sed -i "s|/root/|$CURRENT_DIR/|g" "$CURRENT_DIR"/vpn_site/others/select_config.sh

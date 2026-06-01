@@ -4,7 +4,7 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/root/vpn_site/src/config/sing-box/sing_init.sh
+ExecStart=/root/vpn_site/others/sing_init.sh
 RemainAfterExit=yes
 
 [Install]
