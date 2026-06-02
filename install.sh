@@ -218,6 +218,14 @@ setup_vpn() {
   fi
 }
 
+fix_ikev2() {
+  if [[ "${FIX_IKEV2}" -eq 1 ]]; then
+    sed -i "s|Disconnect|Сonnect|g" /opt/src/ikev2.sh
+    sed -i "s|Disconnect|Сonnect|g" /root/*.mobileconfig
+  fi
+}
+
+
 install_sing_box() {
   if [[ "${INSTALL_SING_BOX}" -eq 1 ]]; then
     cd "$CURRENT_DIR"
@@ -307,10 +315,11 @@ setup() {
   export INSTALL_VPN="${TASK_ENABLED[4]}"
   export MIDDLE_VPN="${TASK_ENABLED[5]}"
   export SETUP_VPN="${TASK_ENABLED[6]}"
-  export INSTALL_SING_BOX="${TASK_ENABLED[7]}"
-  export INSTALL_PYTHON="${TASK_ENABLED[8]}"
-  export INSTALL_BOT="${TASK_ENABLED[9]}"
-  export EXISTS_DOMAIN="${TASK_ENABLED[10]}"
+  export FIX_IKEV2="${TASK_ENABLED[7]}"
+  export INSTALL_SING_BOX="${TASK_ENABLED[8]}"
+  export INSTALL_PYTHON="${TASK_ENABLED[9]}"
+  export INSTALL_BOT="${TASK_ENABLED[10]}"
+  export EXISTS_DOMAIN="${TASK_ENABLED[11]}"
   update_kernel
   install_zsh
   configure_vars
@@ -318,6 +327,7 @@ setup() {
   clone_git
   install_vpn
   setup_vpn
+  fix_ikev2
   install_sing_box
   install_python
   install_bot
@@ -334,6 +344,7 @@ TASK_LABELS=(
   "Установка VPN"
   "Промежуточный VPN"
   "Настройка конфигов VPN"
+  "Исправление OnDemandRules для IKEv2"
   "Установка sing-box"
   "Установка python"
   "Установка бота"
@@ -341,12 +352,12 @@ TASK_LABELS=(
 )
 
 # Состояние пунктов (0 = OFF, 1 = ON)
-TASK_ENABLED=(0 0 1 1 1 1 1 1 1 1 1)
+TASK_ENABLED=(0 0 1 1 1 1 1 1 1 1 1 1)
 
 if [[ "$(uname -r)" == *cloud* ]]; then
-    TASK_ENABLED=(1 0 0 0 0 0 0 0 0 0 0)
+    TASK_ENABLED=(1 0 0 0 0 0 0 0 0 0 0 0)
 elif [[ ! "$SHELL" == *zsh* ]]; then
-    TASK_ENABLED=(0 1 0 0 0 0 0 0 0 0 0)
+    TASK_ENABLED=(0 1 0 0 0 0 0 0 0 0 0 0)
 fi
 
 
