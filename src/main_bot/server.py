@@ -7,7 +7,7 @@ import config
 from config import set_key_env
 
 
-def get_all_processes():
+def get_all_processes(server=None):
     try:
         result = subprocess.run(f'/usr/bin/tdbdump {config.tdb_file_ppp}', shell=True, capture_output=True, text=True)
         processes = []
@@ -28,7 +28,7 @@ def get_all_processes():
         return str(e)
 
 
-def delete_session(username=None):
+def delete_session(server=None, username=None):
     try:
         # Выполнение команды ps с grep
         result = get_all_processes()
@@ -50,7 +50,7 @@ def reboot_vpn():
     subprocess.run('/usr/bin/systemctl restart xl2tpd.service', shell=True, capture_output=True, text=True)
 
 
-def write_users_to_file(users):
+def write_users_to_file(users, server=None):
     try:
         # Открываем файл для записи
         with open(config.output_file, 'w') as file:
@@ -159,3 +159,9 @@ def get_ipsec_key():
     for i, key in enumerate(keys, 1):
         return key
     return None
+
+
+def get_current_users_vpn():
+    with open(config.output_file, 'r') as file:
+        text = file.readlines()
+        return text

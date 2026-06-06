@@ -1,12 +1,44 @@
 from telebot import TeleBot, types, apihelper
 
 import database
+import server
+import config
 from buttons import Button, Result, start_buttons
 
 
 def start_program():
-    database.create_table()
-    database.create_table_bot()
+    database.create_all_tables()
+    # Добавление текущего сервера в список серверов
+    if database.get_count_servers() == 0:
+        with open(config.ipsec_conf, 'r') as f:
+            connects = [el for el in f.read().splitlines('conn') if 'leftid=' in el]
+            for conn in connects:
+                ip = [el for el in conn.split('\n') if 'leftid=' in el][0]
+                if ip.count('.') == 3:
+                    database.add_server('main', None, ip, True)
+                else:
+                    database.add_server('main', ip, None, True)
+                break
+        with open(config.ipsec_cl_conf, 'r') as f:
+            for line in f.readlines():
+                if 'right=' in line:
+                    ip=line.split('=')[1].strip()
+                    if ip.count('.') == 3:
+                        database.add_server('vpn', None, ip, False)
+                    else:
+                        database.add_server('vpn', ip, None, False)
+    curr_server = [el[0] for el in database.get_all_servers() if el[4]][-1]
+
+    # Проверка добавления текущих vpn пользователей
+    if database.get_count_users() == 0:
+        password = server.get_current_users_vpn()
+        if len(password) > 0:
+            for passw in password:
+                info = passw.split()
+                if info[1] == "l2tpd":
+                    database.add_user(info[0], info[2], curr_server)
+
+
 
 
 def check_enable_user(user_id, username):
@@ -21,10 +53,9 @@ def check_enable_user(user_id, username):
 
 def check_tg_usr(bot: TeleBot, message: types.Message):
     if not database.get_count_users():
-        msg = bot.send_message(message.chat.id,
-                               "Пользователей нет в системе, Давайте добавим нового пользователя: выберите "
-                               "пользователя которого добавляем")
-        bot.register_next_step_handler(msg, next_step, bot, 'first_user')
+        database.add_tg_user(message.chat.id, message.from_user.username, 'admin', 1)
+        bot.send_message(message.chat.id, "Пользователей нет в системе, вы добавлены в качестве администратора в систему",
+                         reply_markup=start_buttons.get_markup(role=database.get_role_user(message.chat.id)))
         return False
     if not check_enable_user(message.chat.id, message.from_user.username):
         bot.send_message(message.chat.id,
@@ -36,11 +67,6 @@ def check_tg_usr(bot: TeleBot, message: types.Message):
 def next_step(message: types.Message, bot: TeleBot, type_in: str, next=None, *args):
     if message.from_user.is_bot:
         bot.send_message(message.chat.id, "Доступ запрещен")
-        return
-    if not database.get_count_users() and type_in == 'first_user':
-        database.add_tg_user(message.chat.id, message.from_user.username, 'admin', 1)
-        bot.send_message(message.chat.id, "Администратор добавлен в систему",
-                         reply_markup=start_buttons.get_markup(role=database.get_role_user(message.chat.id)))
         return
     if not check_tg_usr(bot, message):
         return

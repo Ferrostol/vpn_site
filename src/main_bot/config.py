@@ -3,10 +3,13 @@ import os
 from dotenv import load_dotenv, set_key
 
 
-database_file = 'users.db'
-tdb_file_ppp = '/var/run/pppd2.tdb'
-output_file = '/etc/ppp/chap-secrets'
-ipsec_file = '/etc/ipsec.secrets'
+# Пути до файлов
+database_file = 'users.db'              # БД
+tdb_file_ppp = '/var/run/pppd2.tdb'     # Файл с информацией о текущих подключениях к vpn
+output_file = '/etc/ppp/chap-secrets'   # Файл с текущими пользователями vpn
+ipsec_file = '/etc/ipsec.secrets'       # Файл с секретным ключем
+ipsec_cl_conf = '/etc/ipsec.d/client.conf'  # Файл с конфигом подключения к другому vpn сервису
+ipsec_conf = '/etc/ipsec.conf'          # Файл с основным конфигом ipsec
 
 token = None
 vpn_request = None

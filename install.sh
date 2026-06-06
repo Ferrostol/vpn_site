@@ -193,8 +193,8 @@ setup_vpn() {
 
     if [[ "${MIDDLE_VPN}" -eq 1 ]]; then
       cd vpn_client
-      cat ipsec.conf >> /etc/ipsec.conf
-      sed -i "s|VPN_IP|$VPN_IP|g" /etc/ipsec.conf
+      cat client.conf > /etc/ipsec.d/client.conf
+      sed -i "s|VPN_IP|$VPN_IP|g" /etc/ipsec.d/client.conf
       cat options.l2tpd.client >> /etc/ppp/options.l2tpd.client
       sed -i "s|VPN_USER|$VPN_USER|g" /etc/ppp/options.l2tpd.client
       sed -i "s|VPN_PASSWORD|$VPN_PASSWORD|g" /etc/ppp/options.l2tpd.client
