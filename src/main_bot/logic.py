@@ -19,14 +19,14 @@ def start_program():
                 else:
                     database.add_server('main', ip, None, True)
                 break
-        with open(config.ipsec_cl_conf, 'r') as f:
-            for line in f.readlines():
-                if 'right=' in line:
-                    ip=line.split('=')[1].strip()
-                    if ip.count('.') == 3:
-                        database.add_server('vpn', None, ip, False)
-                    else:
-                        database.add_server('vpn', ip, None, False)
+        # with open(config.ipsec_cl_conf, 'r') as f:
+        #     for line in f.readlines():
+        #         if 'right=' in line:
+        #             ip=line.split('=')[1].strip()
+        #             if ip.count('.') == 3:
+        #                 database.add_server('vpn', None, ip, False)
+        #             else:
+        #                 database.add_server('vpn', ip, None, False)
     curr_server = [el[0] for el in database.get_all_servers() if el[4]][-1]
 
     # Проверка добавления текущих vpn пользователей
@@ -84,19 +84,26 @@ def check_button_call(bot: TeleBot, call, role: str):
     chat_id = call.message.chat.id
     bot.clear_step_handler(call.message)
     btn = Button.get_buttons(start_buttons, role, call.data, chat_id)
-    result: Result = btn.analize(btn, chat_id)
-    if result is not None:
-        btn = result.btn
-        text = result.text
-        next = result.next_step
-    elif btn.is_work:
-        result: Result = btn.work_def(btn, chat_id, role, bot)
-        btn: Button = result.btn
-        text = result.text
-        next = result.next_step
-    else:
-        text = btn.text
-        next = None
+    while True:
+        result: Result = btn.analize(btn, chat_id)
+        if result is not None:
+            btn = result.btn
+            text = result.text
+            next = result.next_step
+        elif btn.is_work:
+            result: Result = btn.work_def(btn, chat_id, role, bot)
+            btn: Button = result.btn
+            text = result.text
+            next = result.next_step
+        else:
+            text = btn.text
+            next = None
+        if btn.get_first_if_one:
+            keys = btn.get_keys(chat_id)
+            if len(keys) <= (2 if btn.can_back else 1):
+                btn = keys[0]
+            continue
+        break
     try:
         bot.edit_message_text(
             text,

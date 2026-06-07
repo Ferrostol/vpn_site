@@ -23,8 +23,9 @@ class Button:
             custom_keys_def = None,         # lambda функция по генерации списка кнопок, которые находятся после нажатия данной кнопки
             analize = None,                 # lambda функция условия для захода в кнопку
             is_work: bool = False,          # Нажатие кнопки выполняет действие
-            work_def = None,                 # lambda функция действия при нажатии кнопки
-            visible: bool = True
+            work_def = None,                # lambda функция действия при нажатии кнопки
+            visible: bool = True,
+            get_first_if_one: bool = False  # Сразу переходить внутрь кнопки, если внутри текущей всего одна кнопка
     ):
         if text is None:
             text = caption
@@ -47,6 +48,7 @@ class Button:
         self.prev_button: Button = None
         self.keys_search = key
         self.visible = visible
+        self.get_first_if_one = get_first_if_one
 
         if (can_back if can_back is not None else False) and not self.is_custom_keys:
             self.buttons.append(Button(f'{self.keys_search}{razdelitel}back', 'Назад', "Назад"))
@@ -90,11 +92,28 @@ class Button:
         markup.add(*row)
         return markup
 
-    def get_prev_button(self, up_up: bool = False):
-        if self.is_back or up_up: #Возвращаем кнопку на два уровня выше от кнопки Назад или если надо подняться на два уровня
-            if self.prev_button.prev_button is not None:
-                return self.prev_button.prev_button
-        return self.prev_button
+    def get_prev_button(self, chat_id, up_up: bool = False):
+        btn = self
+        if btn.is_back:
+            btn = btn.prev_button
+        flag = False
+
+        while btn.prev_button.get_first_if_one or (flag and up_up):
+            keys = btn.prev_button.get_keys(chat_id)
+            if len(keys) <= (2 if btn.can_back else 1):
+                btn = btn.prev_button
+            if flag:
+                flag = False
+                up_up = False
+            if not btn.prev_button.get_first_if_one and up_up:
+                flag = True
+                btn = btn.prev_button
+        if up_up and btn.prev_button is not None:
+            btn = btn.prev_button
+
+        if btn.prev_button is not None:
+            btn = btn.prev_button
+        return btn
 
     def check_secure_user(self, role):
         if self.is_admin and role != 'admin':
@@ -102,7 +121,7 @@ class Button:
         return True
 
     @staticmethod
-    def get_buttons(btns: "Button", role: str, search_key: str, *args):
+    def get_buttons(btns: "Button", role: str, search_key: str, chat_id, *args):
         def get_button(btn, role: str, search_key: str):
             if not btn.check_secure_user(role):
                 return None
@@ -121,7 +140,7 @@ class Button:
             btn = btns
 
         if btn.is_back:
-            btn = btn.get_prev_button()
+            btn = btn.get_prev_button(chat_id)
         return btn
 
 
@@ -155,8 +174,8 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
         Button('unlock', 'Дать доступ пользователю TG', 'Выберите пользователя для разблокировки', can_back=True, is_custom_keys=True,
                custom_keys_def=lambda key, *args: [
                    Button(el[0], el[1], is_work=True, work_def=(lambda el0=el[0], el1=el[1]: (
-                       lambda self_btn, *arg: (
-                           Result(self_btn.get_prev_button(True),
+                       lambda self_btn, chat_id, *arg: (
+                           Result(self_btn.get_prev_button(chat_id, True),
                                   "Пользователь разблокирован"
                                   if enable_user_tg(el0, 1) == 'edit'
                                   else f"Ошибка при разблокировке пользователя {el1}")
@@ -168,7 +187,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                custom_keys_def=lambda key, *args: [
                    Button(el[0], el[1], is_work=True, work_def=(lambda el0=el[0], el1=el[1]: (
                        lambda self_btn, chat_id, *arg: (
-                           Result(self_btn.get_prev_button(True),
+                           Result(self_btn.get_prev_button(chat_id, True),
                                   "Пользователь удален"
                                   if delete_tg_user(el0) == 'edit'
                                   else f"Ошибка при удалении пользователя {el1}")
@@ -179,8 +198,8 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
         Button('lock', 'Заблокировать пользователя TG', 'Выберите пользователя для блокировки', can_back=True, is_custom_keys=True,
                custom_keys_def=lambda key, *args: [
                    Button(el[0], el[1], is_work=True, work_def=(lambda el0=el[0], el1=el[1]: (
-                       lambda self_btn, *arg: (
-                           Result(self_btn.get_prev_button(True),
+                       lambda self_btn, chat_id, *arg: (
+                           Result(self_btn.get_prev_button(chat_id, True),
                                   "Пользователь заблокирован"
                                   if enable_user_tg(el0, 0) == 'edit'
                                   else f"Ошибка при блокировке пользователя {el1}")
@@ -197,7 +216,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
 
 
     ]),
-    Button('admin_serv', 'Админ VPN серверов', 'Выберите сервер', can_back=True, is_custom_keys=True,
+    Button('admin_serv', 'Админ VPN серверов', 'Выберите сервер', can_back=True, is_custom_keys=True, get_first_if_one=True,
            custom_keys_def= lambda *args: [
                Button(f'srv_{srv[0]}', srv[1], can_back=True, buttons=[
                    Button('add_user_vpn', 'Добавить пользователя VPN', can_back=True, is_work=True,
@@ -224,8 +243,8 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                    Button('unlock_vpn', 'Разблокировать пользователя VPN', 'Выберите пользователя для разблокировки', can_back=True, is_custom_keys=True,
                           custom_keys_def=lambda key, *args, server_id=srv[0]: [
                                   Button(el[0], el[0], is_work=True, work_def=(lambda el0=el[0], el1=el[1], server_id=srv[0]: (
-                                  lambda self_btn, *arg: (
-                                      Result(self_btn.get_prev_button(True),
+                                  lambda self_btn, chat_id, *arg: (
+                                      Result(self_btn.get_prev_button(chat_id, True),
                                              f"Ошибка при разблокировки пользователя {el1}"
                                              if not enable_user_vpn(el0, 1, server_id) == 'edit'
                                              else "Пользователь разблокирован"
@@ -238,8 +257,8 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                    Button('lock_vpn', 'Заблокировать пользователя VPN', 'Выберите пользователя для блокировки', can_back=True, is_custom_keys=True,
                           custom_keys_def=lambda key, *args, server_id=srv[0]: [
                               Button(el[0], el[0], is_work=True, work_def=(lambda el0=el[0], el1=el[1], server_id=srv[0]: (
-                                  lambda self_btn, *arg: (
-                                      Result(self_btn.get_prev_button(True),
+                                  lambda self_btn, chat_id, *arg: (
+                                      Result(self_btn.get_prev_button(chat_id, True),
                                              f"Ошибка при блокировке пользователя {el1}"
                                              if not enable_user_vpn(el0, 0, server_id) == 'edit'
                                              else "Пользователь заблокирован"
@@ -253,7 +272,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                           custom_keys_def=lambda key, *args, server_id=srv[0]: [
                               Button(el[0], el[0], is_work=True, work_def=(lambda el0=el[0], server_id=srv[0]: (
                                   lambda self_btn, chat_id, *arg: (
-                                      Result(self_btn.get_prev_button(True),
+                                      Result(self_btn.get_prev_button(chat_id, True),
                                              f"Ошибка при удалении пользователя {el0}"
                                              if not delete_vpn_user(el0, server_id) == 'edit'
                                              else "Пользователь удален"
@@ -291,9 +310,9 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
             Button('enable', 'Выключить' if config.multi_connect else 'Включить', 'Подтвердите', can_back=True, buttons=[
                 Button(name, 'Подтвердаю', is_work=True, visible=visible,
                        work_def=(lambda enabled_=config.multi_connect: (
-                           lambda self_btn, *args: (
+                           lambda self_btn, chat_id, *args: (
                                Result(
-                                   self_btn.get_prev_button(True).get_prev_button(),
+                                   self_btn.get_prev_button(chat_id, True).get_prev_button(chat_id),
                                    'Настройка изменена'
                                    if (err := edit_multi_connect(not enabled_)) is None
                                    else err
@@ -303,8 +322,8 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
             ])
         ]),
         Button('reboot_vpn', 'Перезагрузить VPN', 'Перезагрузить?', can_back=True, buttons=[
-            Button('confirm', '100% Да', is_work=True, work_def= lambda self_btn, *args: (
-                (reboot_vpn(), Result(self_btn.get_prev_button(True), 'Перезагружено'))[-1]
+            Button('confirm', '100% Да', is_work=True, work_def= lambda self_btn, chat_id, *args: (
+                (reboot_vpn(), Result(self_btn.get_prev_button(chat_id, True), 'Перезагружено'))[-1]
             ))
         ]),
         Button('reboot_server', 'Перезагрузить сервер', can_back=True, buttons=[
@@ -316,7 +335,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
         Button('export_db', 'Экспорт БД', can_back=True, buttons=[
             Button('confirm', '100% Да', is_work=True,
                    work_def= lambda self_btn, chat_id, role, bot, *args: (
-                       Result(self_btn.get_prev_button(True),
+                       Result(self_btn.get_prev_button(chat_id, True),
                               (logic.send_file(bot, chat_id, config.database_file), 'Файл экспортирован')[-1])
                    ))
         ]),
