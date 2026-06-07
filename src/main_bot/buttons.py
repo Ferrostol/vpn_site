@@ -147,13 +147,6 @@ def get_table_str(head: list, data: list):
     return f"<pre>{table}</pre>"
 
 
-def extract_text(s, matchs):
-    match = re.search(f'(?:{matchs})(.*)', s)
-    return match.group(1) if match else None
-
-
-
-
 
 
 

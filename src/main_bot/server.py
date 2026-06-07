@@ -163,5 +163,10 @@ def get_ipsec_key():
 
 def get_current_users_vpn():
     with open(config.output_file, 'r') as file:
-        text = file.readlines()
-        return text
+        lines = file.readlines()
+        users = []
+        for passw in lines:
+            info = passw.split()
+            if info[1] == "l2tpd":
+                users.append((info[0].strip('"'), info[2].strip('"')))
+        return users

@@ -34,9 +34,7 @@ def start_program():
         password = server.get_current_users_vpn()
         if len(password) > 0:
             for passw in password:
-                info = passw.split()
-                if info[1] == "l2tpd":
-                    database.add_user(info[0], info[2], curr_server)
+                database.add_user(passw[0], passw[1], curr_server)
 
 
 
