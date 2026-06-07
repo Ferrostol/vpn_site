@@ -19,14 +19,14 @@ def start_program():
                 else:
                     database.add_server('main', ip, None, True)
                 break
-        # with open(config.ipsec_cl_conf, 'r') as f:
-        #     for line in f.readlines():
-        #         if 'right=' in line:
-        #             ip=line.split('=')[1].strip()
-        #             if ip.count('.') == 3:
-        #                 database.add_server('vpn', None, ip, False)
-        #             else:
-        #                 database.add_server('vpn', ip, None, False)
+        with open(config.ipsec_cl_conf, 'r') as f:
+            for line in f.readlines():
+                if 'right=' in line:
+                    ip=line.split('=')[1].strip()
+                    if ip.count('.') == 3:
+                        database.add_server('vpn', None, ip, False)
+                    else:
+                        database.add_server('vpn', ip, None, False)
     curr_server = [el[0] for el in database.get_all_servers() if el[4]][-1]
 
     # Проверка добавления текущих vpn пользователей
@@ -102,7 +102,7 @@ def check_button_call(bot: TeleBot, call, role: str):
             keys = btn.get_keys(chat_id)
             if len(keys) <= (2 if btn.can_back else 1):
                 btn = keys[0]
-            continue
+                continue
         break
     try:
         bot.edit_message_text(

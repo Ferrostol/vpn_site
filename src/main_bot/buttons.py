@@ -51,7 +51,7 @@ class Button:
         self.get_first_if_one = get_first_if_one
 
         if (can_back if can_back is not None else False) and not self.is_custom_keys:
-            self.buttons.append(Button(f'{self.keys_search}{razdelitel}back', 'Назад', "Назад"))
+            self.buttons.append(Button(f'{razdelitel}back', 'Назад', "Назад"))
 
         for btn in self.buttons:
             btn.prev_button = self
@@ -72,7 +72,7 @@ class Button:
         if self.is_custom_keys:
             btns = self.custom_keys_def(self.key, *args)
             if self.can_back:
-                btns.append(Button(f'{self.key}{razdelitel}back', 'Назад', "Назад"))
+                btns.append(Button(f'{razdelitel}back', 'Назад', "Назад"))
             for btn in btns:
                 btn.prev_button = self
                 btn.keys_search = f"{self.keys_search}{razdelitel}{btn.key}"
@@ -93,24 +93,18 @@ class Button:
         return markup
 
     def get_prev_button(self, chat_id, up_up: bool = False):
+        def check_btn(bt):
+            keys = bt.prev_button.get_keys(chat_id)
+            if len(keys) <= (2 if bt.can_back else 1):
+                bt = bt.prev_button
+                return check_btn(bt)
+            return bt
         btn = self
         if btn.is_back:
             btn = btn.prev_button
-        flag = False
-
-        while btn.prev_button.get_first_if_one or (flag and up_up):
-            keys = btn.prev_button.get_keys(chat_id)
-            if len(keys) <= (2 if btn.can_back else 1):
-                btn = btn.prev_button
-            if flag:
-                flag = False
-                up_up = False
-            if not btn.prev_button.get_first_if_one and up_up:
-                flag = True
-                btn = btn.prev_button
+        btn = check_btn(btn)
         if up_up and btn.prev_button is not None:
-            btn = btn.prev_button
-
+            btn = check_btn(btn.prev_button)
         if btn.prev_button is not None:
             btn = btn.prev_button
         return btn
@@ -218,7 +212,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
     ]),
     Button('admin_serv', 'Админ VPN серверов', 'Выберите сервер', can_back=True, is_custom_keys=True, get_first_if_one=True,
            custom_keys_def= lambda *args: [
-               Button(f'srv_{srv[0]}', srv[1], can_back=True, buttons=[
+               Button(f'srv_{srv[0]}', srv[1], f'Сервер {srv[1]}', can_back=True, buttons=[
                    Button('add_user_vpn', 'Добавить пользователя VPN', can_back=True, is_work=True,
                           work_def=lambda self, chat_id, role, *arg, server_id=srv[0]: Result(
                               self, 'Введите имя нового пользователя', make_recursive_lambda(lambda self_func, login, login_role, *args: (
@@ -303,7 +297,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                               else Result(self, get_table_str(['USR', 'PASSWORD', 'STATUS'], data))
                           ))
                ]) for srv in get_all_servers()
-           ]),
+           ], analize=lambda x, chat_id, *args: None if get_count_servers() > 1 else Result(x.get_prev_button(chat_id), 'Отсутствуют сервера VPN')),
 
     Button('settings', 'Настройки', 'Выберите действие', is_admin=True, can_back=True, buttons= [
         Button('multi_connect', '1 user != 1 session', 'Изменение', can_back=True, is_custom_keys=True, custom_keys_def= lambda *args : [
