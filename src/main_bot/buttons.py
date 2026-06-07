@@ -208,7 +208,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
            custom_keys_def= lambda *args: [
                Button(f'srv_{srv[0]}', srv[1], can_back=True, buttons=[
                    Button('add_user_vpn', 'Добавить пользователя VPN', can_back=True, is_work=True,
-                          work_def=lambda self, chat_id, role, *arg: Result(
+                          work_def=lambda self, chat_id, role, *arg, server_id=srv[0]: Result(
                               self, 'Введите имя нового пользователя', make_recursive_lambda(lambda self_func, login, login_role, *args: (
                                   Result(Button.get_buttons(start_buttons, login_role, self.keys_search),'Ошибка создания пользователя')
                                   if not self.check_secure_user(login_role)
@@ -217,77 +217,77 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                                       if not self.check_secure_user(password_role)
                                       else Result(self.prev_button, f'Пользователь создан\nЛогин:{login}\nПароль:{password}\nОбщий ключ:{get_ipsec_key()}')
                                       if (
-                                          add_user(login, password, srv[0]),
-                                          write_users_to_file([(el[0], el[1]) for el in get_all_username_vpn(server=srv[0], enabled=1)], server=srv[0]),
-                                          len([el for el in get_all_username_vpn(server=srv[0]) if el[0] == login])
+                                          add_user(login, password, server_id),
+                                          write_users_to_file([(el[0], el[1]) for el in get_all_username_vpn(server=server_id, enabled=1)], server=server_id),
+                                          len([el for el in get_all_username_vpn(server=server_id) if el[0] == login])
                                       )[-1] > 0
                                       else Result(self.prev_button, "Пользователь не создан")
                                   )))
-                                  if len([el for el in get_all_username_vpn(server=srv[0]) if el[0] == login]) == 0
+                                  if len([el for el in get_all_username_vpn(server=server_id) if el[0] == login]) == 0
                                   else Result(self, "Такой пользователь уже существует. Введите имя нового пользователя", self_func)
                               ))
                           )),
 
                    Button('unlock_vpn', 'Разблокировать пользователя VPN', 'Выберите пользователя для разблокировки', can_back=True, is_custom_keys=True,
-                          custom_keys_def=lambda key, *args: [
-                                  Button(el[0], el[0], is_work=True, work_def=(lambda el0=el[0], el1=el[1]: (
+                          custom_keys_def=lambda key, *args, server_id=srv[0]: [
+                                  Button(el[0], el[0], is_work=True, work_def=(lambda el0=el[0], el1=el[1], server_id=srv[0]: (
                                   lambda self_btn, *arg: (
                                       Result(self_btn.get_prev_button(True),
                                              f"Ошибка при разблокировки пользователя {el1}"
-                                             if not enable_user_vpn(el0, 1, srv[0]) == 'edit'
+                                             if not enable_user_vpn(el0, 1, server_id) == 'edit'
                                              else "Пользователь разблокирован"
-                                             if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(server=srv[0], enabled=1)], server=srv[0])) is None
+                                             if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(server=server_id, enabled=1)], server=server_id)) is None
                                              else f"Ошибка при разблокировки пользователя {el1}. Ошибка {err}")
                                   )))())
-                              for el in get_all_username_vpn(server=srv[0], enabled=0)
+                              for el in get_all_username_vpn(server=server_id, enabled=0)
                           ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
 
                    Button('lock_vpn', 'Заблокировать пользователя VPN', 'Выберите пользователя для блокировки', can_back=True, is_custom_keys=True,
-                          custom_keys_def=lambda key, *args: [
-                              Button(el[0], el[0], is_work=True, work_def=(lambda el0=el[0], el1=el[1]: (
+                          custom_keys_def=lambda key, *args, server_id=srv[0]: [
+                              Button(el[0], el[0], is_work=True, work_def=(lambda el0=el[0], el1=el[1], server_id=srv[0]: (
                                   lambda self_btn, *arg: (
                                       Result(self_btn.get_prev_button(True),
                                              f"Ошибка при блокировке пользователя {el1}"
-                                             if not enable_user_vpn(el0, 0, srv[0]) == 'edit'
+                                             if not enable_user_vpn(el0, 0, server_id) == 'edit'
                                              else "Пользователь заблокирован"
-                                             if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)], server=srv[0])) is None
+                                             if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)], server=server_id)) is None
                                              else f"Ошибка при блокировке пользователя {el1}. Ошибка {err}")
                                   )))())
-                              for el in get_all_username_vpn(server=srv[0], enabled=1)
+                              for el in get_all_username_vpn(server=server_id, enabled=1)
                           ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
 
                    Button('delete_vpn', 'Удалить пользователя VPN', 'Выберите пользователя для удаления', can_back=True, is_custom_keys=True,
-                          custom_keys_def=lambda key, *args: [
-                              Button(el[0], el[0], is_work=True, work_def=(lambda el0=el[0]: (
+                          custom_keys_def=lambda key, *args, server_id=srv[0]: [
+                              Button(el[0], el[0], is_work=True, work_def=(lambda el0=el[0], server_id=srv[0]: (
                                   lambda self_btn, chat_id, *arg: (
                                       Result(self_btn.get_prev_button(True),
                                              f"Ошибка при удалении пользователя {el0}"
-                                             if not delete_vpn_user(el0, srv[0]) == 'edit'
+                                             if not delete_vpn_user(el0, server_id) == 'edit'
                                              else "Пользователь удален"
-                                             if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)], server=srv[0])) is None
+                                             if (err := write_users_to_file([(els[0], els[1]) for els in get_all_username_vpn(enabled=1)], server=server_id)) is None
                                              else f"Пользователь удален. Ошибка при обновлении файла с доступами. Ошибка {err}")
                                   )))())
-                              for el in get_all_username_vpn(server=srv[0])
+                              for el in get_all_username_vpn(server=server_id)
                           ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
 
                    Button('del_all_ses', 'Удалить все сессии', is_work=True,
-                          work_def=lambda self, *arg: Result(
+                          work_def=lambda self, *arg, server_id=srv[0]: Result(
                               self.prev_button,
-                              'Все сессии удалены' if delete_session(server=srv[0]) else 'Ошибка удаления сессий'
+                              'Все сессии удалены' if delete_session(server=server_id) else 'Ошибка удаления сессий'
                           )),
                    Button('show_all_ses', 'Посмотреть текущие сессии', can_back=True, parse_mode="HTML", is_work=True,
-                          work_def=lambda self, chat_id, *arg: (
+                          work_def=lambda self, chat_id, *arg, server_id=srv[0]: (
                               Result(self.prev_button, "Список сессий пуст")
-                              if not len((data := get_all_processes(server=srv[0])))
+                              if not len((data := get_all_processes(server=server_id)))
                               else Result(self, get_table_str(['PID', 'Local IP', 'Name'], data))
                           ), buttons=[
                            Button('reload', 'Обновить', can_back=True, parse_mode="HTML", is_work=True,
                                   work_def=lambda self, *arg: self.prev_button.work_def(self.prev_button, *arg))
                        ]),
                    Button('vpn_users', 'Посмотреть пользователей VPN', can_back=True, parse_mode="HTML", is_work=True,
-                          work_def=lambda self, chat_id, *arg: (
+                          work_def=lambda self, chat_id, *arg, server_id=srv[0]: (
                               Result(self.prev_button, "Список пользователей пуст")
-                              if not len((data := get_all_username_vpn(server=srv[0])))
+                              if not len((data := get_all_username_vpn(server=server_id)))
                               else Result(self, get_table_str(['USR', 'PASSWORD', 'STATUS'], data))
                           ))
                ]) for srv in get_all_servers()
