@@ -70,6 +70,13 @@
         "outbound": "reject"
       },
       { "ip_is_private": true, "outbound": "direct" },
+      {
+        "domain_suffix": [
+          ".ru"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      },
       { "rule_set": [ "geosite-ru", "geoip-ru" ], "outbound": "direct" },
       { "rule_set": [ "geosite-proxy" ], "outbound": "proxy-out" }
     ],
