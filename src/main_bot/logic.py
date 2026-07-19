@@ -70,12 +70,20 @@ def next_step(message: types.Message, bot: TeleBot, type_in: str, next=None, *ar
         return
     role = database.get_role_user(message.chat.id)
     result = next(message.text, role, message, *args)
-    msg = bot.send_message(
-        message.chat.id,
-        result.text,
-        reply_markup=result.btn.get_markup(role=role),
-        parse_mode=result.btn.parse_mode
-    )
+    if result.btn.parse_mode == "markdown":
+        md_content = types.InputRichMessage(markdown=result.text)
+        msg = bot.send_rich_message(
+            message.chat.id,
+            rich_message=md_content,
+            reply_markup=result.btn.get_markup(role=role)
+        )
+    else:
+        msg = bot.send_message(
+            message.chat.id,
+            result.text,
+            reply_markup=result.btn.get_markup(role=role),
+            parse_mode=result.btn.parse_mode
+        )
     if result.next_step is not None:
         bot.register_next_step_handler(msg, next_step, bot, None, result.next_step)
 
@@ -105,13 +113,22 @@ def check_button_call(bot: TeleBot, call, role: str):
                 continue
         break
     try:
-        bot.edit_message_text(
-            text,
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            reply_markup=btn.get_markup(role=role, chat_id=chat_id),
-            parse_mode=btn.parse_mode
-        )
+        if btn.parse_mode == "markdown":
+            md_content = types.InputRichMessage(markdown=result.text)
+            bot.edit_message_text(
+                rich_message=md_content,
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                reply_markup=btn.get_markup(role=role, chat_id=chat_id)
+            )
+        else:
+            bot.edit_message_text(
+                text,
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                reply_markup=btn.get_markup(role=role, chat_id=chat_id),
+                parse_mode=btn.parse_mode
+            )
         if next is not None:
             bot.register_next_step_handler(call.message, next_step, bot, None, next)
     except apihelper.ApiTelegramException as e:

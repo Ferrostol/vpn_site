@@ -1,5 +1,5 @@
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
-from prettytable import PrettyTable
+from prettytable import PrettyTable, TableStyle
 
 from database import *
 from server import *
@@ -157,7 +157,8 @@ def get_table_str(head: list, data: list):
     table.field_names = head  # Установка заголовков столбцов
     for row in data:
         table.add_row(row)
-    return f"<pre>{table}</pre>"
+    table.set_style(TableStyle.MARKDOWN)
+    return table.get_string()
 
 
 
@@ -201,7 +202,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                    for el in get_all_tg_username(enabled=1)
                ], analize=lambda x, *args: None if len(x.get_keys(*args)) > 1 else Result(x.prev_button, 'Пользователей нет')),
 
-        Button('show_users', 'Посмотреть пользователей TG', can_back=True, parse_mode="HTML", is_work=True,
+        Button('show_users', 'Посмотреть пользователей TG', can_back=True, parse_mode="markdown", is_work=True,
                work_def=lambda self, chat_id, *arg: (
                    Result(self.prev_button, "Список пользователей пуст")
                    if not len((data := get_all_tg_username()))
@@ -281,16 +282,16 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
                               self.prev_button,
                               'Все сессии удалены' if delete_session(server=server_id) else 'Ошибка удаления сессий'
                           )),
-                   Button('show_all_ses', 'Посмотреть текущие сессии', can_back=True, parse_mode="HTML", is_work=True,
+                   Button('show_all_ses', 'Посмотреть текущие сессии', can_back=True, parse_mode="markdown", is_work=True,
                           work_def=lambda self, chat_id, *arg, server_id=srv[0]: (
                               Result(self.prev_button, "Список сессий пуст")
                               if not len((data := get_all_processes(server=server_id)))
                               else Result(self, get_table_str(['PID', 'Local IP', 'Name'], data))
                           ), buttons=[
-                           Button('reload', 'Обновить', can_back=True, parse_mode="HTML", is_work=True,
+                           Button('reload', 'Обновить', can_back=True, parse_mode="markdown", is_work=True,
                                   work_def=lambda self, *arg: self.prev_button.work_def(self.prev_button, *arg))
                        ]),
-                   Button('vpn_users', 'Посмотреть пользователей VPN', can_back=True, parse_mode="HTML", is_work=True,
+                   Button('vpn_users', 'Посмотреть пользователей VPN', can_back=True, parse_mode="markdown", is_work=True,
                           work_def=lambda self, chat_id, *arg, server_id=srv[0]: (
                               Result(self.prev_button, "Список пользователей пуст")
                               if not len((data := get_all_username_vpn(server=server_id)))
@@ -351,7 +352,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
         ])
     ]),
 
-    Button('show_my_acc', 'Посмотреть свои аккаунты', can_back=True, parse_mode="HTML", is_work=True,
+    Button('show_my_acc', 'Посмотреть свои аккаунты', can_back=True, parse_mode="markdown", is_work=True,
            work_def=lambda self, chat_id, *arg: (
                Result(self.prev_button, "Список пользователей пуст")
                if not len((data := get_my_account(chat_id)))
