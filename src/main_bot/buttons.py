@@ -211,7 +211,7 @@ start_buttons = Button('start', 'Начало', 'Выберите действи
 
 
     ]),
-    Button('admin_serv', 'Админ VPN серверов', 'Выберите сервер', can_back=True, is_custom_keys=True, get_first_if_one=True,
+    Button('admin_serv', 'Админ VPN серверов', 'Выберите сервер', is_admin=True, can_back=True, is_custom_keys=True, get_first_if_one=True,
            custom_keys_def= lambda *args: [
                Button(f'srv_{srv[0]}', srv[1], f'Сервер {srv[1]}', can_back=True, buttons=[
                    Button('add_user_vpn', 'Добавить пользователя VPN', can_back=True, is_work=True,
