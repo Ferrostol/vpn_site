@@ -81,10 +81,5 @@
       { "rule_set": [ "geosite-proxy" ], "outbound": "proxy-out" }
     ],
     "final": "proxy-out"
-  },
-  "experimental": {
-    "cache_file": {
-      "enabled": true
-    }
   }
 }
