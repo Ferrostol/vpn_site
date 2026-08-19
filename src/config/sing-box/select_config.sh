@@ -11,6 +11,6 @@ OLD=$(cat $STATE_FILE 2>/dev/null)
 
 if [ "$NEW" != "$OLD" ]; then
     echo $NEW > $STATE_FILE
-    cp /root/vpn_site/src/config/sing-box/config_$NEW.json /etc/sing-box/config.json
+    cp /CURRENT_DIR/vpn_site/src/config/sing-box/config_$NEW.json /etc/sing-box/config.json
     systemctl restart sing-box
 fi

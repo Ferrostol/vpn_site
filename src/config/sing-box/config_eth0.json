@@ -13,8 +13,7 @@
   "outbounds": [
     {
       "type": "direct",
-      "tag": "inet",
-      "bind_interface": "eth0"
+      "tag": "inet"
     }
   ],
   "route": {

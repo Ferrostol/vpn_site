@@ -230,21 +230,31 @@ install_sing_box() {
   if [[ "${INSTALL_SING_BOX}" -eq 1 ]]; then
     cd "$CURRENT_DIR"
     bash <(curl -fsSL https://sing-box.app/install.sh)
+
     cd vpn_site/src/config/sing-box
-    cat sing_init.service > /etc/systemd/system/sing_init.service
-    sed -i "s|/root/|$CURRENT_DIR/|g" /etc/systemd/system/sing_init.service
-    mkdir -p "$CURRENT_DIR"/vpn_site/others/
-    cp sing_init.sh "$CURRENT_DIR"/vpn_site/others/
-    chmod +x "$CURRENT_DIR"/vpn_site/others/sing_init.sh
+
+    # Создаем папку для хранения конфигов
+    mkdir -p "$CURRENT_DIR"/vpn_site/others/sing-box
+    # Скрипт для инициализации маршрута от L2TP до sing-box
+    cp sing_init.sh "$CURRENT_DIR"/vpn_site/others/sing-box/
+    chmod +x "$CURRENT_DIR"/vpn_site/others/sing-box/sing_init.sh
     sed -i "s|VPN_L2TP_NET|${VPN_L2TP_NET%%/*}|g" "$CURRENT_DIR"/vpn_site/others/sing_init.sh
 
-    cp select_config.sh "$CURRENT_DIR"/vpn_site/others/
-    chmod +x "$CURRENT_DIR"/vpn_site/others/select_config.sh
-    sed -i "s|/root/|$CURRENT_DIR/|g" "$CURRENT_DIR"/vpn_site/others/select_config.sh
+    # Создаем демона для инициализации маршрута от L2TP до sing-box
+    cat sing_init.service > /etc/systemd/system/sing_init.service
+    sed -i "s|/CURRENT_DIR/|$CURRENT_DIR/|g" /etc/systemd/system/sing_init.service
+
+    # Скрипт для выбора конфига распределения трафика sing-box
+    cp select_config.sh "$CURRENT_DIR"/vpn_site/others/sing-box/
+    chmod +x "$CURRENT_DIR"/vpn_site/others/sing-box/select_config.sh
+    sed -i "s|/CURRENT_DIR/|$CURRENT_DIR/|g" "$CURRENT_DIR"/vpn_site/others/sing-box/select_config.sh
+
+    # Создание демона для выбора конфига распределения трафика
     cat sing_config.service > /etc/systemd/system/sing_config.service
-    sed -i "s|/root/|$CURRENT_DIR/|g" /etc/systemd/system/sing_config.service
+    sed -i "s|/CURRENT_DIR/|$CURRENT_DIR/|g" /etc/systemd/system/sing_config.service
+
+    # Создание таймера демона для выбора конфига распределения трафика
     cat sing_config.timer > /etc/systemd/system/sing_config.timer
-    sed -i "s|/root/|$CURRENT_DIR/|g" /etc/systemd/system/sing_config.timer
   fi
 }
 
@@ -275,7 +285,7 @@ install_bot() {
     pip install -r ./src/main_bot/requirements.txt
 
     cp ./src/config/vpn_bot.service /etc/systemd/system
-    sed -i "s|/root/|$CURRENT_DIR/|g" /etc/systemd/system/vpn_bot.service
+    sed -i "s|/CURRENT_DIR/|$CURRENT_DIR/|g" /etc/systemd/system/vpn_bot.service
     echo "TOKEN=$BOT_TOKEN" > src/.env
     echo "USE_VPN=$USE_VPN" >> src/.env
     if grep -q "peer-lock.sh" /etc/ppp/ip-up; then
