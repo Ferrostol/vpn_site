@@ -14,3 +14,13 @@ if [ "$NEW" != "$OLD" ]; then
     cp /CURRENT_DIR/vpn_site/src/config/sing-box/config_$NEW.json /etc/sing-box/config.json
     systemctl restart sing-box
 fi
+
+if ["$NEW" = "eth0" ]; then
+    if ip link show vpn &>/dev/null; then
+      echo "d vpn" > /var/run/xl2tpd/l2tp-control
+      ipsec down l2tp-client
+      ipsec up l2tp-client
+      echo "c vpn" > /var/run/xl2tpd/l2tp-control
+      sleep 2
+    fi
+fi
