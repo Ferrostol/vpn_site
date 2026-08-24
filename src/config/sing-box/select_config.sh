@@ -1,7 +1,7 @@
 #!/bin/bash
 STATE_FILE=/run/singbox_if
 
-if ping -I vpn 1.1.1.1 -c 2 -W 1; then
+if ping -I vpn 1.1.1.1 -c 2 -W 1 >/dev/null 2>&1; then
     NEW=vpn
 else
     NEW=eth0
@@ -15,7 +15,7 @@ if [ "$NEW" != "$OLD" ]; then
     systemctl restart sing-box
 fi
 
-if ["$NEW" = "eth0" ]; then
+if [ "$NEW" = "eth0" ]; then
     if ip link show vpn &>/dev/null; then
       echo "d vpn" > /var/run/xl2tpd/l2tp-control
       ipsec down l2tp-client
