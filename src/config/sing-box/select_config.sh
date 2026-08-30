@@ -16,11 +16,9 @@ if [ "$NEW" != "$OLD" ]; then
 fi
 
 if [ "$NEW" = "eth0" ]; then
-    if ip link show vpn &>/dev/null; then
-      echo "d vpn" > /var/run/xl2tpd/l2tp-control
-      ipsec down l2tp-client
-      ipsec up l2tp-client
-      echo "c vpn" > /var/run/xl2tpd/l2tp-control
-      sleep 2
-    fi
+    echo "d vpn" > /var/run/xl2tpd/l2tp-control
+    ipsec down l2tp-client
+    ipsec up l2tp-client
+    echo "c vpn" > /var/run/xl2tpd/l2tp-control
+    sleep 2
 fi
